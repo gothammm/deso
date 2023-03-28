@@ -13,10 +13,16 @@ export class DesoResponse {
           return value;
         },
         2
-      )
+      ),
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
     );
   }
   static async sendFile(filePath: string) {
+    console.log("Hit");
     const extensionName = extname(filePath);
     const contentType = this.#getContentType(extensionName);
     try {
@@ -24,7 +30,6 @@ export class DesoResponse {
       return new Response(file, {
         headers: {
           "Content-Type": contentType,
-          "Content-Length": file.byteLength.toLocaleString()
         },
       });
     } catch {
@@ -34,13 +39,15 @@ export class DesoResponse {
     }
   }
   static #getContentType(extensionName: string) {
-    switch(extensionName) {
+    switch (extensionName) {
       case ".json":
         return "application/json";
       case ".css":
         return "text/css";
       case ".js":
         return "text/javascript";
+      case ".svg":
+        return "image/svg+xml";
       case ".html":
       default:
         return "text/html; charset=utf-8";

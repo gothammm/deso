@@ -11,18 +11,21 @@ export class StaticMiddleware implements DesoMiddleware {
   #pathToAssetFolder: string;
   #assetBaseRoute: string;
   constructor(path: string, pathToAssetFolder: string) {
-    if (!path.endsWith("/*")) {
-      throw new Error("Path must end with a wild card, ex: '/assets/*'");
-    }
-    this.#assetBaseRoute = path.slice(0, path.indexOf("/*"));
+    const hasWildCard = path.endsWith("/*");
+    this.#assetBaseRoute = hasWildCard ? path.slice(0, path.indexOf("/*")) : path;
     this.#pattern = new URLPattern({ pathname: path });
     this.#pathToAssetFolder = pathToAssetFolder;
   }
   exec = async (request: DesoRequest): Promise<Response | undefined> => {
     const { pathname } = new URL(request.url);
-    if (!pathname.startsWith(this.#assetBaseRoute) && this.#assetBaseRoute !== "") {
+    console.log("Skip when /hello", pathname, this.#assetBaseRoute);
+    if (this.#assetBaseRoute === "/" && pathname !== "/") {
       return;
     }
+    if (!pathname.startsWith(this.#assetBaseRoute) && (this.#assetBaseRoute !== "")) {
+      return;
+    }
+    console.log("Did not Skip when /hello", pathname, this.#assetBaseRoute);
     const matchResult = this.#pattern.exec(request.url);
     if (!matchResult) {
       return;
