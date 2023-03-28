@@ -1,3 +1,6 @@
 {
-  "lock": false
+  "lock": false,
+  "tasks": {
+    "test": "deno test --allow-net"
+  }
 }

@@ -1,14 +1,14 @@
 
-import { requestId } from "./src/middlewares/request_id_middleware.ts";
-import { StaticMiddleware } from './src/middlewares/static_middleware.ts';
+import { requestId } from "./lib/middlewares/request_id_middleware.ts";
+import { StaticMiddleware } from './lib/middlewares/static_middleware.ts';
 
 
 export type {
   DesoRequest,
   DesoMiddleware,
   DesoMiddlewareHandler,
-} from './src/types.ts'
-export { Deso } from './src/core.ts';
+} from './lib/types.ts'
+export { Deso } from './lib/core.ts';
 const middlewares = {
   StaticMiddleware,
   requestId,

@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.181.0/http/mod.ts";
 import type { DesoRequest } from "../../mod.ts";
 import { Deso } from "../../mod.ts";
 
@@ -10,4 +9,4 @@ app.get(
     new Response(`Hello World`)
 );
 
-await serve(app.handle, { port: 3000 });
+await app.serve({ port: 3000 });
