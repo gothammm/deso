@@ -1,5 +1,6 @@
+import { DesoContext } from "../context.ts";
 import { DesoResponse } from "../response.ts";
-import type { DesoMiddleware, DesoRequest } from "../types.ts";
+import type { DesoMiddleware } from "../types.ts";
 import {
   join,
   extname,
@@ -16,7 +17,8 @@ export class StaticMiddleware implements DesoMiddleware {
     this.#pattern = new URLPattern({ pathname: path });
     this.#pathToAssetFolder = pathToAssetFolder;
   }
-  exec = async (request: DesoRequest): Promise<Response | undefined> => {
+  exec = async (context: DesoContext): Promise<Response | undefined> => {
+    const request = context.req();
     const { pathname } = new URL(request.url);
     console.log("Skip when /hello", pathname, this.#assetBaseRoute);
     if (this.#assetBaseRoute === "/" && pathname !== "/") {

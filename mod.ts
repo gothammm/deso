@@ -4,7 +4,6 @@ import { StaticMiddleware } from './lib/middlewares/static_middleware.ts';
 
 
 export type {
-  DesoRequest,
   DesoMiddleware,
   DesoMiddlewareHandler,
 } from './lib/types.ts'

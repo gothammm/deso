@@ -39,23 +39,23 @@ export class Deso extends DesoRequestHandler {
     );
     return;
   }
-  get(path: string, handler: DesoHandler) {
+  get<Path extends string>(path: Path, handler: DesoHandler<Path>) {
     const pattern = new URLPattern({ pathname: path });
     this.#registry.routerGetRegistry.add(path, { handler, pattern });
   }
-  post(path: string, handler: DesoHandler) {
+  post<Path extends string>(path: Path, handler: DesoHandler<Path>) {
     const pattern = new URLPattern({ pathname: path });
     this.#registry.routerPostRegistry.add(path, { handler, pattern });
   }
-  put(path: string, handler: DesoHandler) {
+  put<Path extends string>(path: Path, handler: DesoHandler<Path>) {
     const pattern = new URLPattern({ pathname: path });
     this.#registry.routerPutRegistry.add(path, { handler, pattern });
   }
-  patch(path: string, handler: DesoHandler) {
+  patch<Path extends string>(path: Path, handler: DesoHandler<Path>) {
     const pattern = new URLPattern({ pathname: path });
     this.#registry.routerPatchRegistry.add(path, { handler, pattern });
   }
-  del(path: string, handler: DesoHandler) {
+  ['delete']<Path extends string>(path: Path, handler: DesoHandler<Path>) {
     const pattern = new URLPattern({ pathname: path });
     this.#registry.routerDeleteRegistry.add(path, { handler, pattern });
   }
