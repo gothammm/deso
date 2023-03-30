@@ -1,6 +1,7 @@
-import type { DesoMiddleware } from "./types.ts";
+import type { DesoMiddleware, RouteMatchResult } from "./types.ts";
 import type { Registry } from "./core_registry.ts";
-import { DesoRequest, HttpMethod } from "./types.ts";
+import { HttpMethod } from "./types.ts";
+import { DesoContext } from "./context.ts";
 
 export class DesoRequestHandler {
   #registry: Registry;
@@ -8,29 +9,39 @@ export class DesoRequestHandler {
     this.#registry = registry;
   }
   async handle(request: Request): Promise<Response> {
-    const desoRequest = this.#prepareRequest(request);
-    return (
-      (await this.#runMiddlewares(desoRequest)) ?? this.#runRequest(desoRequest)
-    );
+    // prepare request context.
+    const context = new DesoContext(request);
+    return (await this.#runMiddlewares(context)) ?? this.#runRequest(context);
   }
-  async #runRequest(request: DesoRequest): Promise<Response> {
+  #runRequest(context: DesoContext): Promise<Response> {
+    const request = context.req();
     const requestMethod: HttpMethod = request.method as HttpMethod;
     const routerRegistry = this.#getRouterRegistry(requestMethod);
     const requestMatch = routerRegistry?.match(request.url);
     if (!requestMatch) {
-      return new Response("Not found", {
-        status: 404,
-      });
+      return Promise.resolve(
+        new Response("404 - Not Found", {
+          status: 404,
+        })
+      );
     }
-    return await requestMatch.handler(request);
+    return this.#loadParamsContext(context, requestMatch).then(
+      requestMatch.handler
+    );
   }
-  #prepareRequest(request: Request): DesoRequest {
-    const desoRequest = request as DesoRequest;
-    desoRequest.context = new Map();
-    return desoRequest;
+  #loadParamsContext(
+    context: DesoContext,
+    routeMatchResult: RouteMatchResult
+  ): Promise<DesoContext> {
+    const params = routeMatchResult.params ?? {};
+    const contextStore = context._store();
+    Object.entries(params).forEach(([key, value]) => {
+      contextStore.set(`params:${key}`, value);
+    });
+    return Promise.resolve(context);
   }
   async #runMiddlewares(
-    request: DesoRequest
+    context: DesoContext
   ): Promise<Response | undefined | void> {
     const middlewaresToRun = this.#registry.middlewareRegistry.get("*") ?? [];
     if (middlewaresToRun.length <= 0) {
@@ -38,7 +49,7 @@ export class DesoRequestHandler {
     }
     for (const middleware of middlewaresToRun) {
       const handler = (<DesoMiddleware>middleware)?.exec ?? middleware;
-      const middlewareResult = await handler(request);
+      const middlewareResult = await handler(context);
       if (!middlewareResult) {
         continue;
       }

@@ -1,12 +1,14 @@
-import type { DesoRequest } from "../../mod.ts";
 import { Deso } from "../../mod.ts";
 
 const app = new Deso();
 
-app.get(
-  "/hello",
-  (_request: DesoRequest) =>
-    new Response(`Hello World`)
-);
+app.get("/hello/:id", (context) => {
+  return context.json({
+    userId: context.param('id')
+  });
+});
+app.get("/hello", (context) => {
+  return context.text('Hello');
+});
 
 await app.serve({ port: 3000 });
