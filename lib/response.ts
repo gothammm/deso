@@ -21,7 +21,6 @@ export class DesoResponse {
     );
   }
   static async sendFile(filePath: string) {
-    console.log("Hit");
     const extensionName = extname(filePath);
     const contentType = this.#getContentType(extensionName);
     try {

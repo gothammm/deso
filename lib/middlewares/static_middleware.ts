@@ -22,7 +22,6 @@ export class StaticMiddleware implements DesoMiddleware {
   exec = async (context: DesoContext): Promise<Response | undefined> => {
     const request = context.req();
     const { pathname } = new URL(request.url);
-    console.log("Skip when /hello", pathname, this.#assetBaseRoute);
     if (this.#assetBaseRoute === "/" && pathname !== "/") {
       return;
     }
@@ -32,7 +31,6 @@ export class StaticMiddleware implements DesoMiddleware {
     ) {
       return;
     }
-    console.log("Did not Skip when /hello", pathname, this.#assetBaseRoute);
     const matchResult = this.#pattern.exec(request.url);
     if (!matchResult) {
       return;
