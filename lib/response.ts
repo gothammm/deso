@@ -1,8 +1,7 @@
 import { extname } from "https://deno.land/std@0.181.0/path/mod.ts";
 
 export class DesoResponse {
-  // deno-lint-ignore no-explicit-any
-  static json(object: Array<Map<string, any>> | Map<string, any>) {
+  static json(object: Array<Map<string, unknown>> | Map<string, unknown>) {
     return new Response(
       JSON.stringify(
         object,
