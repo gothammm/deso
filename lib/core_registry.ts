@@ -1,12 +1,12 @@
 import type { DesoMiddleware, DesoMiddlewareHandler } from "./types.ts";
-import { RouterRegistry } from "./router_registry.ts";
+import { DesoRouter } from "./router.ts";
 
 export class Registry {
-  routerGetRegistry = new RouterRegistry("GET");
-  routerPostRegistry = new RouterRegistry("POST");
-  routerPutRegistry = new RouterRegistry("PUT");
-  routerDeleteRegistry = new RouterRegistry("DELETE");
-  routerPatchRegistry = new RouterRegistry("PATCH");
+  getRouter = new DesoRouter();
+  postRouter = new DesoRouter();
+  putRouter = new DesoRouter();
+  deleteRouter = new DesoRouter();
+  patchRouter = new DesoRouter();
   middlewareRegistry = new Map<
     string,
     Array<DesoMiddlewareHandler | DesoMiddleware>

@@ -1,5 +1,5 @@
 import type { Component } from "solid-js";
-import { Routes, Route, A, Router, hashIntegration } from "@solidjs/router";
+import { A, hashIntegration, Route, Router, Routes } from "@solidjs/router";
 
 import logo from "./logo.svg";
 import styles from "./App.module.css";

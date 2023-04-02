@@ -1,3 +1,4 @@
+import type { RouteParams } from "./router.ts";
 import { JSONValue, ParamKeys, RouteMatchResult } from "./types.ts";
 
 export class DesoContext<Path = string> {
@@ -5,11 +6,20 @@ export class DesoContext<Path = string> {
   // deno-lint-ignore no-explicit-any
   #store: Map<string, any>;
   #responseHeaders?: Headers;
-  constructor(request: Request) {
+  constructor(request: Request, options?: { routeParams: RouteParams }) {
     this.#baseRequest = request;
     // deno-lint-ignore no-explicit-any
     this.#store = new Map<string, any>();
+    if (options?.routeParams) {
+      this.loadParams(options.routeParams);
+    }
   }
+  loadParams = (params: RouteParams) => {
+    for (const [key, value] of params) {
+      this.#store.set(`params:${key}`, value);
+    }
+    return this;
+  };
   _store = () => this.#store;
   req = (): Request => this.#baseRequest;
   param = <T extends unknown>(key: ParamKeys<Path>): T | undefined => {

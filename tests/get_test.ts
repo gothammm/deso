@@ -22,12 +22,12 @@ Deno.test("it should respond with json content", async () => {
   const jsonContent = {
     test: "ok",
     nested: {
-      test: "ok"
+      test: "ok",
     },
     list: [{
-      test: "ok"
-    }]
-  }
+      test: "ok",
+    }],
+  };
   const jsonResponse = new Map(Object.entries(jsonContent));
   app.get("/json", () => DesoResponse.json(jsonResponse));
 

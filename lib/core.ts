@@ -7,18 +7,13 @@ import { serve } from "https://deno.land/std@0.181.0/http/server.ts";
 
 export class Deso extends DesoRequestHandler {
   #registry: Registry;
-  #requestHandler: DesoRequestHandler;
   constructor() {
     const registry = new Registry();
     super(registry);
     this.#registry = registry;
-    this.#requestHandler = new DesoRequestHandler(registry);
   }
   serve = (options: ServeInit) => {
     return serve(this.handle, options);
-  }
-  handle = (request: Request) => {
-    return this.#requestHandler.handle(request);
   };
   /**
    * Registers a middleware that runs before each request.
@@ -35,28 +30,18 @@ export class Deso extends DesoRequestHandler {
     const existingMiddlewareHandlers = registeredMiddlewares.get("*") ?? [];
     registeredMiddlewares.set(
       WILDCARD_PATH,
-      existingMiddlewareHandlers.concat(middleware)
+      existingMiddlewareHandlers.concat(middleware),
     );
     return;
   }
-  get<Path extends string>(path: Path, handler: DesoHandler<Path>) {
-    const pattern = new URLPattern({ pathname: path });
-    this.#registry.routerGetRegistry.add(path, { handler, pattern });
-  }
-  post<Path extends string>(path: Path, handler: DesoHandler<Path>) {
-    const pattern = new URLPattern({ pathname: path });
-    this.#registry.routerPostRegistry.add(path, { handler, pattern });
-  }
-  put<Path extends string>(path: Path, handler: DesoHandler<Path>) {
-    const pattern = new URLPattern({ pathname: path });
-    this.#registry.routerPutRegistry.add(path, { handler, pattern });
-  }
-  patch<Path extends string>(path: Path, handler: DesoHandler<Path>) {
-    const pattern = new URLPattern({ pathname: path });
-    this.#registry.routerPatchRegistry.add(path, { handler, pattern });
-  }
-  ['delete']<Path extends string>(path: Path, handler: DesoHandler<Path>) {
-    const pattern = new URLPattern({ pathname: path });
-    this.#registry.routerDeleteRegistry.add(path, { handler, pattern });
-  }
+  get = <Path extends string>(path: Path, handler: DesoHandler<Path>) =>
+    this.#registry.getRouter.add(path, handler);
+  post = <Path extends string>(path: Path, handler: DesoHandler<Path>) =>
+    this.#registry.postRouter.add(path, handler);
+  put = <Path extends string>(path: Path, handler: DesoHandler<Path>) =>
+    this.#registry.putRouter.add(path, handler);
+  patch = <Path extends string>(path: Path, handler: DesoHandler<Path>) =>
+    this.#registry.patchRouter.add(path, handler);
+  ["delete"] = <Path extends string>(path: Path, handler: DesoHandler<Path>) =>
+    this.#registry.deleteRouter.add(path, handler);
 }

@@ -9,11 +9,11 @@ export interface RouteMatchResult {
 export type HttpMethod = "GET" | "POST" | "PUT" | "HEAD" | "DELETE" | "PATCH";
 
 export type DesoHandler<Path = string> = (
-  context: DesoContext<Path>
+  context: DesoContext<Path>,
 ) => Promise<Response> | Response;
 
 export type DesoMiddlewareHandler = (
-  context: DesoContext<string>
+  context: DesoContext<string>,
 ) => Promise<Response | undefined | void>;
 
 export interface DesoMiddleware {
@@ -27,10 +27,9 @@ export type JSONObject = {
   [key: string]: JSONValue;
 };
 
-type ParamKeyName<NameWithPattern> =
-  NameWithPattern extends `${infer Name}{${infer _Pattern}`
-    ? Name
-    : NameWithPattern;
+type ParamKeyName<NameWithPattern> = NameWithPattern extends
+  `${infer Name}(${infer _Pattern})` ? Name
+  : NameWithPattern;
 
 type ParamKey<Component> = Component extends `:${infer NameWithPattern}`
   ? ParamKeyName<NameWithPattern>

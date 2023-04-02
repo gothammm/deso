@@ -12,13 +12,13 @@ export class DesoResponse {
           }
           return value;
         },
-        2
+        2,
       ),
       {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
   }
   static async sendFile(filePath: string) {

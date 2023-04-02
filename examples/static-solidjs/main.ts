@@ -1,6 +1,5 @@
 import * as path from "https://deno.land/std@0.181.0/path/mod.ts";
 import { Deso, middlewares } from "../../mod.ts";
-import { DesoResponse } from "../../lib/response.ts";
 
 const app = new Deso();
 
@@ -13,12 +12,11 @@ await Deno.run({
 app.before(new middlewares.StaticMiddleware("/assets/*", "./ui/dist/assets"));
 app.before(new middlewares.StaticMiddleware("/", "./ui/dist"));
 
-app.get("/api/hello", (_req) => {
+app.get("/api/hello", (context) => {
   const response = new Map([
-    ["test", "ok"]
-  ])
-
-  return DesoResponse.json(response);
+    ["test", "ok"],
+  ]);
+  return context.json(response);
 });
 
 await app.serve({ port: 3000 });

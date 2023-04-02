@@ -1,7 +1,9 @@
 import { Deso } from "../mod.ts";
 
-
-export async function desoServer(app: Deso, assertionBlock: (baseUrl: string) => void) {
+export async function desoServer(
+  app: Deso,
+  assertionBlock: (baseUrl: string) => void,
+) {
   const port = 0;
   const controller = new AbortController();
   const { signal } = controller;
@@ -13,6 +15,6 @@ export async function desoServer(app: Deso, assertionBlock: (baseUrl: string) =>
       const baseUrl = `http://${hostname}:${port}`;
       await assertionBlock(baseUrl);
       controller.abort();
-    }
-  })
+    },
+  });
 }
