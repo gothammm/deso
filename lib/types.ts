@@ -12,8 +12,8 @@ export type DesoHandler<Path = string> = (
   context: DesoContext<Path>,
 ) => Promise<Response> | Response;
 
-export type DesoMiddlewareHandler = (
-  context: DesoContext<string>,
+export type DesoMiddlewareHandler<Path = string> = (
+  context: DesoContext<Path>,
 ) => Promise<Response | undefined | void>;
 
 export interface DesoMiddleware {

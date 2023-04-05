@@ -18,7 +18,7 @@ export class DesoContext<Path = string> {
     }
     return this;
   };
-  _store = () => this.#store;
+  $_store = () => this.#store;
   req = (): Request => this.#baseRequest;
   param = <T extends unknown>(key: ParamKeys<Path>): T | undefined => {
     const paramValue = this.#store.get(`params:${key}`);
@@ -42,8 +42,17 @@ export class DesoContext<Path = string> {
     });
   };
   text = (value: string): Response =>
-    new Response(value, { headers: this.#responseHeaders });
-  header(key: string, value: string, options?: { append: boolean }) {
+    new Response(value, { headers: this.#responseHeaders ?? {} });
+  header(key: string): string | undefined;
+  header(key: string, value: string, options?: { append: boolean }): Headers;
+  header(
+    key: string,
+    value?: string,
+    options?: { append: boolean }
+  ): string | undefined | Headers {
+    if (!value) {
+      return this.#baseRequest.headers.get(key) ?? undefined;
+    }
     this.#responseHeaders = new Headers();
     if (options?.append) {
       this.#responseHeaders.append(key, value);
@@ -52,7 +61,11 @@ export class DesoContext<Path = string> {
     }
     return this.#responseHeaders;
   }
-
+  set = (key: string, value: unknown): void => {
+    this.#store.set(`req:context:${key}`, value);
+  };
+  get = <K extends string, V = unknown>(key: K): V | undefined =>
+    (this.#store.get(`req:context:${key}`) as V) ?? undefined;
   #loadParamsContext = (routeMatchResult: RouteMatchResult) => {
     const params = routeMatchResult.params ?? {};
     Object.entries(params).forEach(([key, value]) => {
