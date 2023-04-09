@@ -1,4 +1,4 @@
-import { DesoHandler } from "./types.ts";
+import type { DesoHandler } from "./types.ts";
 
 type RoutingCache<T = string> = Map<string, RoutingCache<T> | DesoHandler<T>>;
 
@@ -19,7 +19,7 @@ export class DesoRouter {
   #resultCache = new Map<string, RouteMatchResult<string>>();
   add = <Path extends string>(path: Path, handler: DesoHandler<Path>) => {
     const routeParts = path.split("/").filter((i) => i !== "");
-    return this.#addRoutePart<Path>(routeParts, handler, this.#cache);
+    return this.#addRoutePart<Path>(routeParts.length <= 0 ? ["/"] : routeParts, handler, this.#cache);
   };
   match = (url: string): RouteMatchResult<string> => {
     const path = new URL(url).pathname;
@@ -28,7 +28,7 @@ export class DesoRouter {
     }
     const routeParts = path.split("/").filter((part) => part !== "");
     const [handler, params, pathPattern] = this.#findMatch(
-      routeParts,
+      routeParts.length <= 0 ? ["/"] : routeParts,
       this.#cache,
       { params: new Map(), path: "" }
     );
@@ -94,6 +94,7 @@ export class DesoRouter {
     };
     if (!steppedCache.has(head)) {
       for (const [pattern, steppedCacheValue] of steppedCache) {
+        console.log(steppedCache);
         const isParamPart = pattern.startsWith(":");
         const isRegexPart = pattern.startsWith("(");
         if (!isParamPart && !isRegexPart) {
