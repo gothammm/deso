@@ -1,9 +1,9 @@
-import type { DesoMiddleware } from "./types.ts";
+import type { DesoMiddlewareHandler } from "./types.ts";
 import { Registry } from "./core_registry.ts";
 import { HttpMethod } from "./types.ts";
 import { DesoContext } from "./context.ts";
 import { DesoRouter } from "./router.ts";
-import { DesoMiddlewareHandler } from "../mod.ts";
+import { ConnInfo } from "https://deno.land/std@0.181.0/http/server.ts";
 
 export class DesoRequestHandler {
   #registry: Registry = new Registry();
@@ -11,8 +11,8 @@ export class DesoRequestHandler {
   constructor(registry: Registry) {
     this.#registry = registry;
   }
-  handle = async (request: Request): Promise<Response> => {
-    const context = new DesoContext(request);
+  handle = async (request: Request, conn: ConnInfo): Promise<Response> => {
+    const context = new DesoContext(request, conn);
     const middlewaresToRunBeforeRouteMatch = this.#runMiddlewares(
       this.#registry.middlewareRegistry.get("*") ?? []
     );
@@ -33,6 +33,7 @@ export class DesoRequestHandler {
         })
       );
     }
+    context.$_store().set("path_pattern", pathPattern);
     const associatedMiddlewaresToRun =
       this.#registry.middlewareRegistry.get(
         `${requestMethod}:${pathPattern}`
@@ -44,7 +45,7 @@ export class DesoRequestHandler {
       });
   }
   #runMiddlewares = (
-    middlewares: Array<DesoMiddleware | DesoMiddlewareHandler>
+    middlewares: Array<DesoMiddlewareHandler>
   ) => {
     return async (
       context: DesoContext
@@ -53,8 +54,7 @@ export class DesoRequestHandler {
         return Promise.resolve();
       }
       for (const middleware of middlewares) {
-        const handler = (<DesoMiddleware>middleware)?.exec ?? middleware;
-        const middlewareResult = await handler(context);
+        const middlewareResult = await middleware(context);
         if (!middlewareResult) {
           continue;
         }

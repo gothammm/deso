@@ -2,8 +2,8 @@ import { Deso } from "../../mod.ts";
 
 const app = new Deso();
 
-app.get("/hello", (context) => {
-  return context.text("Hello World!");
+app.get('*', (context) => {
+  return context.text("Hello World! X");
 });
 
 await app.serve({ port: 3000 });

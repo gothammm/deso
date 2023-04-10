@@ -1,10 +1,10 @@
 import { requestId } from "./lib/middlewares/request_id_middleware.ts";
-import { StaticMiddleware } from "./lib/middlewares/static_middleware.ts";
+import { staticMiddleware } from "./lib/middlewares/static_middleware.ts";
 
-export type { DesoMiddleware, DesoMiddlewareHandler } from "./lib/types.ts";
+export type { DesoMiddlewareHandler } from "./lib/types.ts";
 export { Deso } from "./lib/core.ts";
 const middlewares = {
-  StaticMiddleware,
   requestId,
+  staticMiddleware,
 };
 export { middlewares };

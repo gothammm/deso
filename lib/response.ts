@@ -31,7 +31,7 @@ export class DesoResponse {
         },
       });
     } catch {
-      return new Response(`${filePath} - file not found`, {
+      return new Response(`404 ${filePath} - Not Found`, {
         status: 404,
       });
     }

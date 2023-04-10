@@ -8,17 +8,12 @@ export interface RouteMatchResult {
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "HEAD" | "DELETE" | "PATCH";
 
-export type DesoHandler<Path = string> = (
+export type DesoHandler<Path = string, R = Response> = (
   context: DesoContext<Path>,
-) => Promise<Response> | Response;
+) => Promise<R> | R;
 
-export type DesoMiddlewareHandler<Path = string> = (
-  context: DesoContext<Path>,
-) => Promise<Response | undefined | void>;
 
-export interface DesoMiddleware {
-  exec: DesoMiddlewareHandler;
-}
+export type DesoMiddlewareHandler<Path = string, R = Response | undefined> = DesoHandler<Path, R>;
 
 export type JSONPrimitive = string | boolean | number | undefined | null;
 export type JSONValue = JSONObject | JSONArray | JSONPrimitive;

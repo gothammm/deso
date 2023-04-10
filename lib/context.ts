@@ -1,3 +1,4 @@
+import { ConnInfo } from "https://deno.land/std@0.181.0/http/server.ts";
 import type { RouteParams } from "./router.ts";
 import { JSONValue, ParamKeys, RouteMatchResult } from "./types.ts";
 
@@ -5,12 +6,17 @@ export class DesoContext<Path = string> {
   #baseRequest: Request;
   #store: Map<string, unknown>;
   #responseHeaders?: Headers;
-  constructor(request: Request, options?: { routeParams: RouteParams }) {
+  #connection: ConnInfo;
+  constructor(request: Request, conn: ConnInfo, options?: { routeParams: RouteParams }) {
     this.#baseRequest = request;
+    this.#connection = conn;
     this.#store = new Map<string, unknown>();
     if (options?.routeParams) {
       this.loadParams(options.routeParams);
     }
+  }
+  get connection() {
+    return this.#connection;
   }
   loadParams = (params: RouteParams) => {
     for (const [key, value] of params) {

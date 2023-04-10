@@ -1,6 +1,9 @@
 import type { DesoHandler } from "./types.ts";
+import { crawlMap } from "./util.ts";
 
 type RoutingCache<T = string> = Map<string, RoutingCache<T> | DesoHandler<T>>;
+
+type RouteOptions = { params: Map<string, unknown>; path: string };
 
 export type RouteParams = Map<string, unknown>;
 
@@ -19,7 +22,11 @@ export class DesoRouter {
   #resultCache = new Map<string, RouteMatchResult<string>>();
   add = <Path extends string>(path: Path, handler: DesoHandler<Path>) => {
     const routeParts = path.split("/").filter((i) => i !== "");
-    return this.#addRoutePart<Path>(routeParts.length <= 0 ? ["/"] : routeParts, handler, this.#cache);
+    return this.#addRoutePart<Path>(
+      routeParts.length <= 0 ? ["/"] : routeParts,
+      handler,
+      this.#cache
+    );
   };
   match = (url: string): RouteMatchResult<string> => {
     const path = new URL(url).pathname;
@@ -53,8 +60,7 @@ export class DesoRouter {
         DesoHandler<T>
       >();
       handlerRoutingCache.set(this.#HANDLER_KEY, handler);
-      const resultNode = steppedCache.has(head)
-        // deno-lint-ignore no-explicit-any
+      const resultNode = steppedCache.has(head) // deno-lint-ignore no-explicit-any
         ? new Map([...(steppedCache.get(head) as any), ...handlerRoutingCache])
         : handlerRoutingCache;
 
@@ -71,6 +77,20 @@ export class DesoRouter {
 
     return steppedCache.set(head, nextLevelRoutingCache);
   }
+  #constructRouteMatchResult = (
+    matchResult: RoutingCache | DesoHandler | undefined,
+    tokens: string[],
+    options: RouteOptions
+  ): [DesoHandler | undefined, RouteParams, PathPattern] => {
+    const params: RouteParams = options?.params ?? new Map();
+    const pathPattern: PathPattern = options?.path ?? ("" as PathPattern);
+    if (matchResult instanceof Map) {
+      return tokens.length <= 0
+        ? [<DesoHandler>matchResult.get("$_handler") ?? crawlMap(['*', '$_handler'], matchResult), params, pathPattern]
+        : this.#findMatch(tokens, matchResult, options);
+    }
+    return [matchResult, params, pathPattern];
+  };
   #findMatch(
     routeParts: string[],
     steppedCache: RoutingCache,
@@ -80,49 +100,72 @@ export class DesoRouter {
     }
   ): [DesoHandler | undefined, RouteParams, PathPattern] {
     const [head, ...rest] = routeParts;
-    const constructRouteMatchResult = (
-      matchResult?: RoutingCache | DesoHandler
-    ): [DesoHandler | undefined, RouteParams, PathPattern] => {
-      const params: RouteParams = options?.params ?? new Map();
-      const pathPattern: PathPattern = options?.path ?? ("" as PathPattern);
-      if (matchResult instanceof Map) {
-        return rest.length <= 0
-          ? [<DesoHandler>matchResult.get("$_handler"), params, pathPattern]
-          : this.#findMatch(rest, matchResult, options);
-      }
-      return [matchResult, params, pathPattern];
-    };
     if (!steppedCache.has(head)) {
-      for (const [pattern, steppedCacheValue] of steppedCache) {
-        console.log(steppedCache);
-        const isParamPart = pattern.startsWith(":");
-        const isRegexPart = pattern.startsWith("(");
-        if (!isParamPart && !isRegexPart) {
-          continue;
-        }
-        const regexStartIndex = pattern.indexOf("(");
-        const regexEndIndex = pattern.lastIndexOf(")");
-        const regexToCheck =
-          regexStartIndex !== regexEndIndex &&
-          regexStartIndex >= 0 &&
-          regexEndIndex > 0
-            ? pattern.slice(regexStartIndex + 1, regexEndIndex)
-            : undefined;
-        if (regexToCheck && !new RegExp(regexToCheck).test(head)) {
-          continue;
-        }
-        if (isParamPart) {
-          const pathKey = pattern.slice(
-            1,
-            regexStartIndex >= 0 ? regexStartIndex : pattern.length
-          );
-          options.params.set(pathKey, head);
-        }
-        options.path += `/${pattern}`;
-        return constructRouteMatchResult(steppedCacheValue);
-      }
+      return this.#findByPatternToken(steppedCache, head, rest, options);
     }
     options.path += `/${head}`;
-    return constructRouteMatchResult(steppedCache.get(head));
+    const result = this.#constructRouteMatchResult(
+      steppedCache.get(head),
+      rest,
+      options
+    );
+    if (!result[0]) {
+      return this.#findByPatternToken(steppedCache, head, rest, options);
+    }
+    return result;
+  }
+  #findByPatternToken(
+    steppedCache: RoutingCache,
+    currentToken: string,
+    nextTokens: string[],
+    options: RouteOptions
+  ) {
+    let result: [DesoHandler | undefined, RouteParams, PathPattern] = [
+      undefined,
+      new Map(),
+      "",
+    ];
+    for (const [pattern, steppedCacheValue] of steppedCache) {
+      const isParamPart = pattern.startsWith(":");
+      const isRegexPart = pattern.startsWith("(");
+      if (!isParamPart && !isRegexPart && pattern !== "*") {
+        continue;
+      }
+      const regexStartIndex = pattern.indexOf("(");
+      const regexEndIndex = pattern.lastIndexOf(")");
+      const regexToCheck =
+        regexStartIndex !== regexEndIndex &&
+        regexStartIndex >= 0 &&
+        regexEndIndex > 0
+          ? pattern.slice(regexStartIndex + 1, regexEndIndex)
+          : undefined;
+      if (!regexToCheck && pattern === "*") {
+        options.path += `/${pattern}`;
+        result = this.#constructRouteMatchResult(
+          steppedCacheValue,
+          [],
+          options
+        );
+        break;
+      }
+      if (regexToCheck && !new RegExp(regexToCheck).test(currentToken)) {
+        continue;
+      }
+      if (isParamPart) {
+        const pathKey = pattern.slice(
+          1,
+          regexStartIndex >= 0 ? regexStartIndex : pattern.length
+        );
+        options.params.set(pathKey, currentToken);
+      }
+      options.path += `/${pattern}`;
+      result = this.#constructRouteMatchResult(
+        steppedCacheValue,
+        nextTokens,
+        options
+      );
+      break;
+    }
+    return result;
   }
 }

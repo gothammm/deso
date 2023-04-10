@@ -5,6 +5,7 @@ import {
 } from "https://deno.land/std@0.181.0/testing/asserts.ts";
 import { DesoRouter } from "../lib/router.ts";
 import { DesoContext } from "../lib/context.ts";
+import { ConnInfo } from "https://deno.land/std@0.181.0/http/server.ts";
 
 const dummyRequest = (path: string) => new Request(`https://dummy.com${path}`);
 
@@ -22,7 +23,7 @@ Deno.test("returns a matching handler for a simple route", async () => {
   // then
   assertExists(handler);
   assertEquals(path, new URL(request.url).pathname);
-  const response = await handler(new DesoContext(request));
+  const response = await handler(new DesoContext(request, {} as ConnInfo));
   assertEquals(await response.text(), expectedResponseText);
 });
 
@@ -50,7 +51,7 @@ Deno.test(
     const expectedResponseText = (text?: string) => `Hello there! - ${text}`;
     router.add(
       "/hello/:name",
-      (c) => new Response(expectedResponseText(c.param("name"))),
+      (c) => new Response(expectedResponseText(c.param("name")))
     );
     router.add("/hell-yeah", () => new Response("Hell Yeah!"));
 
@@ -63,10 +64,10 @@ Deno.test(
     assertEquals(path, new URL(request.url).pathname);
     assertEquals(params, new Map([["name", "peter"]]));
     const response = await handler(
-      new DesoContext(request, { routeParams: params }),
+      new DesoContext(request, {} as ConnInfo, { routeParams: params })
     );
     assertEquals(await response.text(), expectedResponseText("peter"));
-  },
+  }
 );
 
 Deno.test(
@@ -79,8 +80,8 @@ Deno.test(
       "/hello/:name/id/:id",
       (c) =>
         new Response(
-          expectedResponseText(`${c.param("name")}:${c.param("id")}`),
-        ),
+          expectedResponseText(`${c.param("name")}:${c.param("id")}`)
+        )
     );
     router.add("/hell-yeah", () => new Response("Hell Yeah!"));
 
@@ -96,11 +97,11 @@ Deno.test(
       new Map([
         ["name", "peter"],
         ["id", "2"],
-      ]),
+      ])
     );
     const response = await handler(
-      new DesoContext(request, { routeParams: params }),
+      new DesoContext(request, {} as ConnInfo, { routeParams: params })
     );
     assertEquals(await response.text(), expectedResponseText("peter:2"));
-  },
+  }
 );

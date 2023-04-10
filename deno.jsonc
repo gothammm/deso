@@ -2,5 +2,15 @@
   "lock": false,
   "tasks": {
     "test": "deno test --allow-net"
+  },
+  "fmt": {
+    "files": {
+      "exclude": ["examples/static-solidjs/ui"]
+    }
+  },
+  "lint": {
+    "files": {
+      "exclude": ["examples/static-solidjs/ui"]
+    }
   }
 }
