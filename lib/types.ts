@@ -12,8 +12,8 @@ export type DesoHandler<Path = string, R = Response> = (
   context: DesoContext<Path>,
 ) => Promise<R> | R;
 
-
-export type DesoMiddlewareHandler<Path = string, R = Response | undefined> = DesoHandler<Path, R>;
+export type DesoMiddlewareHandler<Path = string, R = Response | undefined> =
+  DesoHandler<Path, R>;
 
 export type JSONPrimitive = string | boolean | number | undefined | null;
 export type JSONValue = JSONObject | JSONArray | JSONPrimitive;

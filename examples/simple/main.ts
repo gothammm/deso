@@ -2,7 +2,7 @@ import { Deso } from "../../mod.ts";
 
 const app = new Deso();
 
-app.get('*', (context) => {
+app.get("*", (context) => {
   return context.text("Hello World! X");
 });
 

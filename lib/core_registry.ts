@@ -1,4 +1,4 @@
-import type { DesoMiddleware, DesoMiddlewareHandler } from "./types.ts";
+import type { DesoMiddlewareHandler } from "./types.ts";
 import { DesoRouter } from "./router.ts";
 
 export class Registry {
@@ -9,7 +9,7 @@ export class Registry {
   patchRouter = new DesoRouter();
   middlewareRegistry = new Map<
     string,
-    Array<DesoMiddlewareHandler | DesoMiddleware>
+    Array<DesoMiddlewareHandler>
   >();
   constructor() {}
 }

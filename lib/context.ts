@@ -7,7 +7,11 @@ export class DesoContext<Path = string> {
   #store: Map<string, unknown>;
   #responseHeaders?: Headers;
   #connection: ConnInfo;
-  constructor(request: Request, conn: ConnInfo, options?: { routeParams: RouteParams }) {
+  constructor(
+    request: Request,
+    conn: ConnInfo,
+    options?: { routeParams: RouteParams },
+  ) {
     this.#baseRequest = request;
     this.#connection = conn;
     this.#store = new Map<string, unknown>();
@@ -54,7 +58,7 @@ export class DesoContext<Path = string> {
   header(
     key: string,
     value?: string,
-    options?: { append: boolean }
+    options?: { append: boolean },
   ): string | undefined | Headers {
     if (!value) {
       return this.#baseRequest.headers.get(key) ?? undefined;

@@ -14,7 +14,7 @@ export class DesoRequestHandler {
   handle = async (request: Request, conn: ConnInfo): Promise<Response> => {
     const context = new DesoContext(request, conn);
     const middlewaresToRunBeforeRouteMatch = this.#runMiddlewares(
-      this.#registry.middlewareRegistry.get("*") ?? []
+      this.#registry.middlewareRegistry.get("*") ?? [],
     );
     const middlewareResult = await middlewaresToRunBeforeRouteMatch(context);
     return middlewareResult ?? this.#runRequest(context);
@@ -24,20 +24,19 @@ export class DesoRequestHandler {
     const requestMethod: HttpMethod = request.method as HttpMethod;
     const routerRegistry = this.#getRouterRegistry(requestMethod);
     const [path, handler, params, pathPattern] = routerRegistry.match(
-      request.url
+      request.url,
     );
     if (!handler) {
       return Promise.resolve(
         new Response(`404 - ${request.method} - ${path} Not Found`, {
           status: 404,
-        })
+        }),
       );
     }
     context.$_store().set("path_pattern", pathPattern);
-    const associatedMiddlewaresToRun =
-      this.#registry.middlewareRegistry.get(
-        `${requestMethod}:${pathPattern}`
-      ) ?? [];
+    const associatedMiddlewaresToRun = this.#registry.middlewareRegistry.get(
+      `${requestMethod}:${pathPattern}`,
+    ) ?? [];
     return Promise.resolve(context.loadParams(params))
       .then(this.#runMiddlewares(associatedMiddlewaresToRun))
       .then((middlewareResult) => {
@@ -45,10 +44,10 @@ export class DesoRequestHandler {
       });
   }
   #runMiddlewares = (
-    middlewares: Array<DesoMiddlewareHandler>
+    middlewares: Array<DesoMiddlewareHandler>,
   ) => {
     return async (
-      context: DesoContext
+      context: DesoContext,
     ): Promise<Response | undefined | void> => {
       if (middlewares.length <= 0) {
         return Promise.resolve();

@@ -16,7 +16,7 @@ app.group(
     app.get("/:id/rest2", (context) => {
       return new Response("Rest" + context.param("id"));
     });
-  }
+  },
 );
 
 await app.serve({ port: 3000 });

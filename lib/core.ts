@@ -1,7 +1,4 @@
-import type {
-  DesoMiddlewareHandler,
-  HttpMethod,
-} from "./types.ts";
+import type { DesoMiddlewareHandler, HttpMethod } from "./types.ts";
 import { Registry } from "./core_registry.ts";
 import { DesoRequestHandler } from "./request_handler.ts";
 import type { DesoHandler } from "./types.ts";
@@ -34,7 +31,7 @@ export class Deso extends DesoRequestHandler {
     const existingMiddlewareHandlers = registeredMiddlewares.get("*") ?? [];
     registeredMiddlewares.set(
       WILDCARD_PATH,
-      existingMiddlewareHandlers.concat(middleware)
+      existingMiddlewareHandlers.concat(middleware),
     );
     return;
   }
@@ -87,7 +84,7 @@ export class Deso extends DesoRequestHandler {
     ...handlers: [...DesoMiddlewareHandler<Path>[], DesoHandler<Path>]
   ) => {
     (["GET", "PATCH", "HEAD", "PUT", "POST", "PATCH"] as HttpMethod[]).forEach(
-      (method: HttpMethod) => this.#register(method, path, ...handlers)
+      (method: HttpMethod) => this.#register(method, path, ...handlers),
     );
   };
   #register = <Path extends string>(

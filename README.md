@@ -12,7 +12,10 @@ const app = new Deso();
 
 app.get("/", (context) => context.text("Hello World"));
 
-app.get("/name/:name", context => context.text(`Hello ${context.param("name")}!`));
+app.get(
+  "/name/:name",
+  (context) => context.text(`Hello ${context.param("name")}!`),
+);
 
 await app.serve({ port: 3000 });
 ```

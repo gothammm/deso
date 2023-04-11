@@ -51,7 +51,7 @@ Deno.test(
     const expectedResponseText = (text?: string) => `Hello there! - ${text}`;
     router.add(
       "/hello/:name",
-      (c) => new Response(expectedResponseText(c.param("name")))
+      (c) => new Response(expectedResponseText(c.param("name"))),
     );
     router.add("/hell-yeah", () => new Response("Hell Yeah!"));
 
@@ -64,10 +64,10 @@ Deno.test(
     assertEquals(path, new URL(request.url).pathname);
     assertEquals(params, new Map([["name", "peter"]]));
     const response = await handler(
-      new DesoContext(request, {} as ConnInfo, { routeParams: params })
+      new DesoContext(request, {} as ConnInfo, { routeParams: params }),
     );
     assertEquals(await response.text(), expectedResponseText("peter"));
-  }
+  },
 );
 
 Deno.test(
@@ -80,8 +80,8 @@ Deno.test(
       "/hello/:name/id/:id",
       (c) =>
         new Response(
-          expectedResponseText(`${c.param("name")}:${c.param("id")}`)
-        )
+          expectedResponseText(`${c.param("name")}:${c.param("id")}`),
+        ),
     );
     router.add("/hell-yeah", () => new Response("Hell Yeah!"));
 
@@ -97,11 +97,11 @@ Deno.test(
       new Map([
         ["name", "peter"],
         ["id", "2"],
-      ])
+      ]),
     );
     const response = await handler(
-      new DesoContext(request, {} as ConnInfo, { routeParams: params })
+      new DesoContext(request, {} as ConnInfo, { routeParams: params }),
     );
     assertEquals(await response.text(), expectedResponseText("peter:2"));
-  }
+  },
 );

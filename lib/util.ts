@@ -1,6 +1,6 @@
 export function crawl<T extends Map<string, unknown>>(
   path: string[],
-  map: T
+  map: T,
 ): unknown {
   const [head, ...tail] = path;
   const steppedMapValue = map.get(head);
