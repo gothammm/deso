@@ -1,5 +1,5 @@
 import type { DesoHandler } from "./types.ts";
-import { crawlMap } from "./util.ts";
+import { crawl } from "./util.ts";
 
 type RoutingCache<T = string> = Map<string, RoutingCache<T> | DesoHandler<T>>;
 
@@ -86,7 +86,7 @@ export class DesoRouter {
     const pathPattern: PathPattern = options?.path ?? ("" as PathPattern);
     if (matchResult instanceof Map) {
       return tokens.length <= 0
-        ? [<DesoHandler>matchResult.get("$_handler") ?? crawlMap(['*', '$_handler'], matchResult), params, pathPattern]
+        ? [<DesoHandler>matchResult.get("$_handler") ?? crawl(['*', '$_handler'], matchResult), params, pathPattern]
         : this.#findMatch(tokens, matchResult, options);
     }
     return [matchResult, params, pathPattern];
