@@ -7,7 +7,7 @@ app.group(
   // Group level middleware.
   (context) => {
     context.set("request-id", crypto.randomUUID());
-    return Promise.resolve();
+    return Promise.resolve(undefined);
   },
   () => {
     app.get("/:id/rest", (context) => {
@@ -16,7 +16,10 @@ app.group(
     app.get("/:id/rest2", (context) => {
       return new Response("Rest" + context.param("id"));
     });
-  },
+    app.post("/:id/add", (context) => {
+      return new Response("Added" + context.param("id"));
+    });
+  }
 );
 
 await app.serve({ port: 3000 });

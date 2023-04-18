@@ -1,24 +1,13 @@
 import { extname } from "https://deno.land/std@0.181.0/path/mod.ts";
+import { JSONValue } from "./types.ts";
 
 export class DesoResponse {
-  static json(object: Array<Map<string, unknown>> | Map<string, unknown>) {
-    return new Response(
-      JSON.stringify(
-        object,
-        (_, value) => {
-          if (value instanceof Map) {
-            return Object.fromEntries(value);
-          }
-          return value;
-        },
-        2,
-      ),
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
+  static json(object: JSONValue) {
+    return new Response(JSON.stringify(object), {
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+    });
   }
   static async sendFile(filePath: string) {
     const extensionName = extname(filePath);

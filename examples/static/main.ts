@@ -2,9 +2,6 @@ import { Deso, middlewares } from "../../mod.ts";
 
 const app = new Deso();
 
-app.before(new middlewares.StaticMiddleware("/*", "./assets"));
-app.get("/hello", (_context) => {
-  return new Response(`Hello World`);
-});
+app.get("/*", middlewares.staticMiddleware({ assetPath: "./assets" }));
 
 await app.serve({ port: 3000 });

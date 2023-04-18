@@ -46,13 +46,17 @@ export class DesoContext<Path = string> {
     }
     return await incomingRequest.formData();
   }
-  json = <T = JSONValue>(data: T): Response => {
-    return Response.json(data, {
-      headers: this.#responseHeaders ?? {},
-    });
+  json = (data: JSONValue): Response => {
+    return Response.json(
+      data,
+      this.#responseHeaders ? { headers: this.#responseHeaders } : undefined,
+    );
   };
   text = (value: string): Response =>
-    new Response(value, { headers: this.#responseHeaders ?? {} });
+    new Response(
+      value,
+      this.#responseHeaders ? { headers: this.#responseHeaders } : undefined,
+    );
   header(key: string): string | undefined;
   header(key: string, value: string, options?: { append: boolean }): Headers;
   header(
