@@ -19,7 +19,7 @@ app.group(
     app.post("/:id/add", (context) => {
       return new Response("Added" + context.param("id"));
     });
-  }
+  },
 );
 
 await app.serve({ port: 3000 });
