@@ -28,8 +28,7 @@ Deno.test("it should respond with json content", async () => {
       test: "ok",
     }],
   };
-  const jsonResponse = new Map(Object.entries(jsonContent));
-  app.get("/json", () => DesoResponse.json(jsonResponse));
+  app.get("/json", () => DesoResponse.json(jsonContent));
 
   await desoServer(app, async (baseUrl) => {
     const response = await fetch(baseUrl + "/json");
