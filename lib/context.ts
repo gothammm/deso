@@ -1,4 +1,4 @@
-import { ConnInfo } from "https://deno.land/std@0.181.0/http/server.ts";
+import type { ConnInfo } from "./deps.ts";
 import type { RouteParams } from "./router.ts";
 import { JSONValue, ParamKeys, RouteMatchResult } from "./types.ts";
 

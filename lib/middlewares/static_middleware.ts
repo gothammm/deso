@@ -1,5 +1,5 @@
 import { DesoResponse } from "../response.ts";
-import { extname, join } from "https://deno.land/std@0.181.0/path/mod.ts";
+import { extname, join } from "../deps.ts";
 import type { DesoHandler } from "../types.ts";
 
 export const staticMiddleware = (options: {

@@ -3,7 +3,7 @@ import { Registry } from "./core_registry.ts";
 import { HttpMethod } from "./types.ts";
 import { DesoContext } from "./context.ts";
 import { DesoRouter } from "./router.ts";
-import { ConnInfo } from "https://deno.land/std@0.181.0/http/server.ts";
+import type { ConnInfo } from "./deps.ts";
 
 export class DesoRequestHandler {
   #registry: Registry = new Registry();

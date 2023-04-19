@@ -2,8 +2,8 @@ import type { DesoMiddlewareHandler, HttpMethod } from "./types.ts";
 import { Registry } from "./core_registry.ts";
 import { DesoRequestHandler } from "./request_handler.ts";
 import type { DesoHandler } from "./types.ts";
-import type { ServeInit } from "https://deno.land/std@0.181.0/http/server.ts";
-import { serve } from "https://deno.land/std@0.181.0/http/server.ts";
+import type { ServeInit } from "./deps.ts";
+import { serve } from "./deps.ts";
 
 export class Deso extends DesoRequestHandler {
   #registry: Registry;

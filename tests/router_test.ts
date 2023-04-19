@@ -1,11 +1,7 @@
-import {
-  assert,
-  assertEquals,
-  assertExists,
-} from "https://deno.land/std@0.181.0/testing/asserts.ts";
+import { assert, assertEquals, assertExists } from "./deps.ts";
 import { DesoRouter } from "../lib/router.ts";
 import { DesoContext } from "../lib/context.ts";
-import { ConnInfo } from "https://deno.land/std@0.181.0/http/server.ts";
+import type { ConnInfo } from "./deps.ts";
 
 const dummyRequest = (path: string) => new Request(`https://dummy.com${path}`);
 

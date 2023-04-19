@@ -1,4 +1,4 @@
-import { extname } from "https://deno.land/std@0.181.0/path/mod.ts";
+import { extname } from "./deps.ts";
 import { JSONValue } from "./types.ts";
 
 export class DesoResponse {
