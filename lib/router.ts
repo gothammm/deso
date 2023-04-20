@@ -23,7 +23,7 @@ export class DesoRouter {
   add = <Path extends string>(path: Path, handler: DesoHandler<Path>) => {
     const routeParts = path.split("/").filter((i) => i !== "");
     return this.#addRoutePart<Path>(
-      routeParts.length <= 0 ? ["/"] : routeParts,
+      routeParts.length <= 0 ? ["$"] : routeParts,
       handler,
       this.#cache,
     );
@@ -35,7 +35,7 @@ export class DesoRouter {
     }
     const routeParts = path.split("/").filter((part) => part !== "");
     const [handler, params, pathPattern] = this.#findMatch(
-      routeParts.length <= 0 ? ["/"] : routeParts,
+      routeParts.length <= 0 ? ["$"] : routeParts,
       this.#cache,
       { params: new Map(), path: "" },
     );
