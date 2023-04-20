@@ -1,6 +1,12 @@
 import type { ConnInfo } from "./deps.ts";
 import type { RouteParams } from "./router.ts";
-import { JSONValue, ParamKeys, RouteMatchResult } from "./types.ts";
+import {
+  ClientErrorStatusCode,
+  JSONValue,
+  ParamKeys,
+  RouteMatchResult,
+  ServerErrorStatusCode,
+} from "./types.ts";
 
 export class DesoContext<Path = string> {
   #baseRequest: Request;
@@ -28,7 +34,9 @@ export class DesoContext<Path = string> {
     }
     return this;
   };
-  $_store = () => this.#store;
+  get store() {
+    return this.#store;
+  }
   req = (): Request => this.#baseRequest;
   param = <T extends unknown>(key: ParamKeys<Path>): T | undefined => {
     const paramValue = this.#store.get(`params:${key}`);
@@ -47,16 +55,21 @@ export class DesoContext<Path = string> {
     return await incomingRequest.formData();
   }
   json = (data: JSONValue): Response => {
-    return Response.json(
-      data,
-      this.#responseHeaders ? { headers: this.#responseHeaders } : undefined,
-    );
+    return Response.json(data, { ...this.#headersInit });
   };
-  text = (value: string): Response =>
-    new Response(
-      value,
-      this.#responseHeaders ? { headers: this.#responseHeaders } : undefined,
-    );
+  text = (value: string): Response => new Response(value, this.#headersInit);
+  oops = (
+    value: string | JSONValue | Error,
+    status: ClientErrorStatusCode | ServerErrorStatusCode,
+  ) => {
+    if (value instanceof Error) {
+      return new Response(value.message, { ...this.#headersInit, status });
+    }
+    if (typeof value === "string") {
+      return new Response(value, { ...this.#headersInit, status });
+    }
+    return Response.json(value, { ...this.#headersInit, status });
+  };
   header(key: string): string | undefined;
   header(key: string, value: string, options?: { append: boolean }): Headers;
   header(
@@ -86,4 +99,9 @@ export class DesoContext<Path = string> {
       this.#store.set(`params:${key}`, value);
     });
   };
+  get #headersInit() {
+    return this.#responseHeaders
+      ? { headers: this.#responseHeaders }
+      : undefined;
+  }
 }

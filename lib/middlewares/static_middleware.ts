@@ -6,7 +6,7 @@ export const staticMiddleware = (options: {
   assetPath: string;
 }): DesoHandler<string, Response> => {
   return (context): Promise<Response> => {
-    const pathPattern: string = context.$_store().get("path_pattern") as string;
+    const pathPattern: string = context.store.get("path_pattern") as string;
     const requestPath = new URL(context.req().url).pathname;
     const basePattern = pathPattern.replace("/*", "");
     const filePath = requestPath.replace(basePattern, "");
