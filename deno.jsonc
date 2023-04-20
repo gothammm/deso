@@ -1,7 +1,8 @@
 {
   "lock": false,
   "tasks": {
-    "test": "deno test --allow-net"
+    "test": "deno test --allow-net",
+    "check": "deno fmt && deno lint && deno task test"
   },
   "fmt": {
     "files": {
