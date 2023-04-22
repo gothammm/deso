@@ -55,20 +55,36 @@ export class DesoContext<Path = string> {
     return await incomingRequest.formData();
   }
   json = (data: JSONValue): Response => {
-    return Response.json(data, { ...this.#headersInit });
+    return Response.json(data, this.#responseInit);
   };
-  text = (value: string): Response => new Response(value, this.#headersInit);
+  html = (value: string): Response => {
+    if (!this.#responseHeaders) {
+      this.#responseHeaders = new Headers();
+    }
+    this.#responseHeaders?.set("Content-Type", "text/html");
+    return new Response(value, this.#responseInit);
+  };
+  text = (value: string): Response => new Response(value, this.#responseInit);
   oops = (
     value: string | JSONValue | Error,
     status: ClientErrorStatusCode | ServerErrorStatusCode,
   ) => {
     if (value instanceof Error) {
-      return new Response(value.message, { ...this.#headersInit, status });
+      return new Response(
+        value.message,
+        Object.assign(this.#responseInit ?? {}, { status }),
+      );
     }
     if (typeof value === "string") {
-      return new Response(value, { ...this.#headersInit, status });
+      return new Response(
+        value,
+        Object.assign(this.#responseInit ?? {}, { status }),
+      );
     }
-    return Response.json(value, { ...this.#headersInit, status });
+    return Response.json(
+      value,
+      Object.assign(this.#responseInit ?? {}, { status }),
+    );
   };
   header(key: string): string | undefined;
   header(key: string, value: string, options?: { append: boolean }): Headers;
@@ -99,7 +115,7 @@ export class DesoContext<Path = string> {
       this.#store.set(`params:${key}`, value);
     });
   };
-  get #headersInit() {
+  get #responseInit() {
     return this.#responseHeaders
       ? { headers: this.#responseHeaders }
       : undefined;

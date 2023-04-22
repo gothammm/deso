@@ -108,7 +108,7 @@ export class DesoRouter {
     if (!steppedCache.has(head)) {
       return this.#findByPatternToken(steppedCache, head, rest, options);
     }
-    options.path += `/${head}`;
+    options.path += "/" + head;
     const result = this.#constructRouteMatchResult(
       steppedCache.get(head),
       rest,
@@ -144,7 +144,7 @@ export class DesoRouter {
         ? pattern.slice(regexStartIndex + 1, regexEndIndex)
         : undefined;
       if (!regexToCheck && pattern === "*") {
-        options.path += `/${pattern}`;
+        options.path += "/" + pattern;
         result = this.#constructRouteMatchResult(
           steppedCacheValue,
           [],
@@ -162,7 +162,7 @@ export class DesoRouter {
         );
         options.params.set(pathKey, currentToken);
       }
-      options.path += `/${pattern}`;
+      options.path += "/" + pattern;
       result = this.#constructRouteMatchResult(
         steppedCacheValue,
         nextTokens,
