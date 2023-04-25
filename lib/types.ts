@@ -6,7 +6,14 @@ export interface RouteMatchResult {
   handler: DesoHandler;
 }
 
-export type HttpMethod = "GET" | "POST" | "PUT" | "HEAD" | "DELETE" | "PATCH";
+export type HttpMethod =
+  | "GET"
+  | "POST"
+  | "PUT"
+  | "HEAD"
+  | "DELETE"
+  | "PATCH"
+  | "*";
 
 export type DesoHandler<Path = string, R = Response> = (
   context: DesoContext<Path>,

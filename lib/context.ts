@@ -1,10 +1,9 @@
 import type { ConnInfo } from "./deps.ts";
-import type { RouteParams } from "./router.ts";
+import type { Params } from "./_router.ts";
 import {
   ClientErrorStatusCode,
   JSONValue,
   ParamKeys,
-  RouteMatchResult,
   ServerErrorStatusCode,
 } from "./types.ts";
 
@@ -16,7 +15,7 @@ export class DesoContext<Path = string> {
   constructor(
     request: Request,
     conn: ConnInfo,
-    options?: { routeParams: RouteParams },
+    options?: { routeParams: Params },
   ) {
     this.#baseRequest = request;
     this.#connection = conn;
@@ -28,7 +27,7 @@ export class DesoContext<Path = string> {
   get connection() {
     return this.#connection;
   }
-  loadParams = (params: RouteParams) => {
+  loadParams = (params: Params) => {
     for (const [key, value] of params) {
       this.#store.set(`params:${key}`, value);
     }
@@ -39,7 +38,7 @@ export class DesoContext<Path = string> {
   }
   req = (): Request => this.#baseRequest;
   param = <T extends unknown>(key: ParamKeys<Path>): T | undefined => {
-    const paramValue = this.#store.get(`params:${key}`);
+    const paramValue = this.#store.get(`params:PATH:${key}`);
     return (paramValue as T) ?? undefined;
   };
   async body(type: "json"): Promise<Record<string, unknown>>;
@@ -109,12 +108,6 @@ export class DesoContext<Path = string> {
   };
   get = <K extends string, V = unknown>(key: K): V | undefined =>
     (this.#store.get(`req:context:${key}`) as V) ?? undefined;
-  #loadParamsContext = (routeMatchResult: RouteMatchResult) => {
-    const params = routeMatchResult.params ?? {};
-    Object.entries(params).forEach(([key, value]) => {
-      this.#store.set(`params:${key}`, value);
-    });
-  };
   get #responseInit() {
     return this.#responseHeaders
       ? { headers: this.#responseHeaders }

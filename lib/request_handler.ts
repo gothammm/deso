@@ -27,22 +27,22 @@ export class DesoRequestHandler {
   async #runRequest(context: DesoContext): Promise<Response> {
     const request = context.req();
     const requestMethod: HttpMethod = request.method as HttpMethod;
-    const routerRegistry = this.#getRouterRegistry(requestMethod);
-    const [path, handler, params, pathPattern] = routerRegistry.match(
-      request.url,
-    );
-    if (!handler) {
+    const routerRegistry = this.#registry.router;
+    const matchResult = routerRegistry.match(request.url, requestMethod);
+    if (!matchResult.node) {
+      const path = new URL(request.url).pathname;
       return Promise.resolve(
         new Response(`404 - ${request.method} - ${path} Not Found`, {
           status: 404,
         }),
       );
     }
-    context.store.set("path_pattern", pathPattern);
-    const associatedMiddlewaresToRun = this.#registry.middlewareRegistry.get(
-      `${requestMethod}:${pathPattern}`,
-    ) ?? [];
-    context.loadParams(params);
+    const handler = matchResult.node.handler;
+    const associatedMiddlewaresToRun =
+      this.#registry.middlewareRegistry.get(matchResult.node.routeHash) ?? [];
+    if (matchResult.params) {
+      context.loadParams(matchResult.params);
+    }
     if (associatedMiddlewaresToRun.length <= 0) {
       return handler(context);
     }
@@ -66,20 +66,4 @@ export class DesoRequestHandler {
       }
     };
   };
-  #getRouterRegistry(method: HttpMethod) {
-    switch (method) {
-      case "GET":
-        return this.#registry.getRouter;
-      case "DELETE":
-        return this.#registry.deleteRouter;
-      case "POST":
-        return this.#registry.postRouter;
-      case "PUT":
-        return this.#registry.putRouter;
-      case "PATCH":
-        return this.#registry.patchRouter;
-      default:
-        return this.#registry.getRouter;
-    }
-  }
 }

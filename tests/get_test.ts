@@ -2,40 +2,47 @@ import { assertEquals } from "./deps.ts";
 import { Deso } from "../mod.ts";
 import { desoServer } from "./fixtures.ts";
 
-Deno.test("hits a simple GET endpoint", async () => {
-  const app = new Deso();
-  const expectedResponse = "test";
-  app.get("/resource", () => new Response(expectedResponse));
+Deno.test({
+  name: "hits a simple GET endpoint",
+  fn: async () => {
+    const app = new Deso();
+    const expectedResponse = "test";
+    app.get("/resource", () => new Response(expectedResponse));
 
-  await desoServer(app, async (baseUrl) => {
-    const response = await fetch(baseUrl + "/resource");
-    const responseCode = response.status;
-    const body = await response.text();
-    assertEquals(responseCode, 200);
-    assertEquals(expectedResponse, body);
-  });
+    await desoServer(app, async (baseUrl) => {
+      const response = await fetch(baseUrl + "/resource");
+      const responseCode = response.status;
+      const body = await response.text();
+      assertEquals(responseCode, 200);
+      assertEquals(expectedResponse, body);
+    });
+  },
 });
 
-Deno.test("path param value is loaded onto context", async () => {
-  const app = new Deso();
-  const responseText = (name: string) => `Hello ${name}`;
-  app.get(
-    "/name/:name",
-    (context) => new Response(responseText(context.param("name")!)),
-  );
-  await desoServer(app, async (baseUrl) => {
-    const nameParam = "john";
-    const response = await fetch(baseUrl + "/name/" + nameParam);
-    const responseCode = response.status;
-    const body = await response.text();
-    assertEquals(responseCode, 200);
-    assertEquals(responseText(nameParam), body);
-  });
+Deno.test({
+  name: "path param value is loaded onto context",
+  fn: async () => {
+    const app = new Deso();
+    const responseText = (name: string) => `Hello ${name}`;
+    app.get(
+      "/name/:name",
+      (context) => new Response(responseText(context.param("name")!)),
+    );
+    await desoServer(app, async (baseUrl) => {
+      const nameParam = "john";
+      const response = await fetch(baseUrl + "/name/" + nameParam);
+      const responseCode = response.status;
+      const body = await response.text();
+      assertEquals(responseCode, 200);
+      assertEquals(responseText(nameParam), body);
+    });
+  },
 });
 
-Deno.test(
-  "path param value that matches the regex pattern is loaded onto context",
-  async () => {
+Deno.test({
+  name:
+    "path param value that matches the regex pattern is loaded onto context",
+  fn: async () => {
     const app = new Deso();
     const responseText = (name: string) => `Hello ${name}`;
     app.get(
@@ -51,11 +58,12 @@ Deno.test(
       assertEquals(responseText(nameParam), body);
     });
   },
-);
+});
 
-Deno.test(
-  "path param value that does not regex pattern is not loaded onto context",
-  async () => {
+Deno.test({
+  name:
+    "path param value that does not regex pattern is not loaded onto context",
+  fn: async () => {
     const app = new Deso();
     const responseText = (name: string) => `Hello ${name}`;
     app.get(
@@ -70,11 +78,11 @@ Deno.test(
       await response.body?.cancel();
     });
   },
-);
+});
 
-Deno.test(
-  "`get` runs route level middlewares before the handler",
-  async () => {
+Deno.test({
+  name: "`get` runs route level middlewares before the handler",
+  fn: async () => {
     const app = new Deso();
     const responseText = (rid: string) => `Hello from request id: ${rid}`;
 
@@ -101,4 +109,4 @@ Deno.test(
       assertEquals(requestId, response.headers.get("request_id"));
     });
   },
-);
+});

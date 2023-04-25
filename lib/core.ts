@@ -4,14 +4,17 @@ import { DesoRequestHandler } from "./request_handler.ts";
 import type { DesoHandler } from "./types.ts";
 import type { ServeInit } from "./deps.ts";
 import { serve } from "./deps.ts";
+import { DesoRouter } from "./_router.ts";
 
 export class Deso extends DesoRequestHandler {
   #registry: Registry;
+  #router: DesoRouter;
   #group = new Map<string, unknown>();
   constructor() {
     const registry = new Registry();
     super(registry);
     this.#registry = registry;
+    this.#router = registry.router;
   }
   serve = (options: ServeInit) => {
     return serve(this.handle, options);
@@ -102,21 +105,11 @@ export class Deso extends DesoRequestHandler {
     ) as Path;
     const groupMiddlewares = (this.#group.get("middlewares") ??
       []) as DesoMiddlewareHandler[];
-    this.#registry.middlewareRegistry.set(`${method}:${routePath}`, [
+    this.#registry.middlewareRegistry.set(btoa(method + ":" + routePath), [
       ...groupMiddlewares,
       ...(middlewares as DesoMiddlewareHandler[]),
     ]);
-    switch (method) {
-      case "GET":
-        return this.#registry.getRouter.add(routePath, handler);
-      case "DELETE":
-        return this.#registry.deleteRouter.add(routePath, handler);
-      case "PUT":
-        return this.#registry.putRouter.add(routePath, handler);
-      case "PATCH":
-        return this.#registry.patchRouter.add(routePath, handler);
-      case "POST":
-        return this.#registry.postRouter.add(routePath, handler);
-    }
+
+    return this.#router.on(method, routePath, handler);
   };
 }
