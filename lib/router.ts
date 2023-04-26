@@ -19,6 +19,7 @@ type RouteMatchResult<Path extends string> = [
 export class DesoRouter {
   #cache: RoutingCache = new Map<string, RoutingCache>();
   #HANDLER_KEY = "$_handler";
+  #patternRegex = /^(:([\w-]+)(?:\(([^)]*)\))?)$/i;
   #resultCache = new Map<string, RouteMatchResult<string>>();
   add = <Path extends string>(path: Path, handler: DesoHandler<Path>) => {
     const routeParts = path.split("/").filter((i) => i !== "");
@@ -130,38 +131,24 @@ export class DesoRouter {
       new Map(),
       "",
     ];
+    const patternRegexChecker = this.#patternRegex;
+
     for (const [pattern, steppedCacheValue] of steppedCache) {
-      const isParamPart = pattern.startsWith(":");
-      const isRegexPart = pattern.startsWith("(");
-      if (!isParamPart && !isRegexPart && pattern !== "*") {
+      if (!patternRegexChecker.test(pattern)) {
         continue;
       }
-      const regexStartIndex = pattern.indexOf("(");
-      const regexEndIndex = pattern.lastIndexOf(")");
-      const regexToCheck = regexStartIndex !== regexEndIndex &&
-          regexStartIndex >= 0 &&
-          regexEndIndex > 0
-        ? pattern.slice(regexStartIndex + 1, regexEndIndex)
-        : undefined;
-      if (!regexToCheck && pattern === "*") {
-        options.path += "/" + pattern;
-        result = this.#constructRouteMatchResult(
-          steppedCacheValue,
-          [],
-          options,
-        );
-        break;
-      }
-      if (regexToCheck && !new RegExp(regexToCheck).test(currentToken)) {
+
+      const [, , paramKey, paramRegex] = patternRegexChecker.exec(pattern) ??
+        [];
+
+      if (!paramKey) {
         continue;
       }
-      if (isParamPart) {
-        const pathKey = pattern.slice(
-          1,
-          regexStartIndex >= 0 ? regexStartIndex : pattern.length,
-        );
-        options.params.set(pathKey, currentToken);
+
+      if (paramRegex && !new RegExp(paramRegex).test(currentToken)) {
+        continue;
       }
+      options.params.set(paramKey, currentToken);
       options.path += "/" + pattern;
       result = this.#constructRouteMatchResult(
         steppedCacheValue,

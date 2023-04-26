@@ -38,11 +38,13 @@ export class DesoRequestHandler {
         }),
       );
     }
-    context.store.set("path_pattern", pathPattern);
+    // Promise.resolve().then(() => context.store.set("path_pattern", pathPattern));
     const associatedMiddlewaresToRun = this.#registry.middlewareRegistry.get(
-      `${requestMethod}:${pathPattern}`,
+      requestMethod + ":" + pathPattern,
     ) ?? [];
-    context.loadParams(params);
+    if (params.size > 0) {
+      context.loadParams(params);
+    }
     if (associatedMiddlewaresToRun.length <= 0) {
       return handler(context);
     }
