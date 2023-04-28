@@ -11,10 +11,10 @@ export class DesoContext<Path = string> {
   #baseRequest: Request;
   #store: Map<string, unknown>;
   #responseHeaders?: Headers;
-  #connection: ConnInfo;
+  #connection?: ConnInfo;
   constructor(
     request: Request,
-    conn: ConnInfo,
+    conn?: ConnInfo,
     options?: { routeParams: RouteParams },
   ) {
     this.#baseRequest = request;

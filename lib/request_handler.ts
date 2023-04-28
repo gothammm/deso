@@ -11,7 +11,7 @@ export class DesoRequestHandler {
   constructor(registry: Registry) {
     this.#registry = registry;
   }
-  handle = async (request: Request, conn: ConnInfo): Promise<Response> => {
+  handle = async (request: Request, conn?: ConnInfo): Promise<Response> => {
     const context = new DesoContext(request, conn);
     const registeredMiddlewares = this.#registry.middlewareRegistry.get("*") ??
       [];
