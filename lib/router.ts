@@ -157,6 +157,14 @@ export class DesoRouter {
       );
       break;
     }
+    if (steppedCache.has("*") && !result[0]) {
+      options.path += "/*";
+      return this.#constructRouteMatchResult(
+        steppedCache.get("*"),
+        [],
+        options,
+      );
+    }
     return result;
   }
 }

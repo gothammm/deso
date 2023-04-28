@@ -24,14 +24,13 @@ Deno.bench("deso", { group: "timing", baseline: true }, async () => {
 
   app.get(
     "/how/deep/can/this/even/go/holy/shit/it/goes/even/deeper/omg/ok/now/it/finally/ends",
-    (context) => context.text("Very Deeply Nested Route")
+    (context) => context.text("Very Deeply Nested Route"),
   );
 
   app.get("/user/lookup/username/:username", (c) =>
     c.json({
       message: "Hello " + c.param("username"),
-    })
-  );
+    }));
 
   const r1 = new Request("http://localhost:3000/user");
   await app.handle(r1); // < second argument are environment variables (these would be determined automatically in production and be cached accordingly)
@@ -49,7 +48,7 @@ Deno.bench("deso", { group: "timing", baseline: true }, async () => {
   await app.handle(r5);
 
   const r6 = new Request(
-    "http://localhost:3000/how/deep/can/this/even/go/holy/shit/it/goes/even/deeper/omg/ok/now/it/finally/ends"
+    "http://localhost:3000/how/deep/can/this/even/go/holy/shit/it/goes/even/deeper/omg/ok/now/it/finally/ends",
   );
   await app.handle(r6);
 
@@ -72,7 +71,7 @@ Deno.bench("cheetah", { group: "timing" }, async () => {
 
   app.get(
     "/how/deep/can/this/even/go/holy/shit/it/goes/even/deeper/omg/ok/now/it/finally/ends",
-    () => "Very Deeply Nested Route"
+    () => "Very Deeply Nested Route",
   );
 
   app.get("/user/lookup/username/:username", (c) => ({
@@ -95,7 +94,7 @@ Deno.bench("cheetah", { group: "timing" }, async () => {
   await app.fetch(r5);
 
   const r6 = new Request(
-    "http://localhost:3000/how/deep/can/this/even/go/holy/shit/it/goes/even/deeper/omg/ok/now/it/finally/ends"
+    "http://localhost:3000/how/deep/can/this/even/go/holy/shit/it/goes/even/deeper/omg/ok/now/it/finally/ends",
   );
   await app.fetch(r6);
 
@@ -118,11 +117,12 @@ Deno.bench("hono", { group: "timing" }, async () => {
 
   app.get(
     "/how/deep/can/this/even/go/holy/shit/it/goes/even/deeper/omg/ok/now/it/finally/ends",
-    (c) => c.text("Very Deeply Nested Route")
+    (c) => c.text("Very Deeply Nested Route"),
   );
 
-  app.get("/user/lookup/username/:username", (c) =>
-    c.json({ message: `Hello ${c.req.param("username")}` })
+  app.get(
+    "/user/lookup/username/:username",
+    (c) => c.json({ message: `Hello ${c.req.param("username")}` }),
   );
 
   const r1 = new Request("http://localhost:3000/user");
@@ -141,7 +141,7 @@ Deno.bench("hono", { group: "timing" }, async () => {
   await app.fetch(r5);
 
   const r6 = new Request(
-    "http://localhost:3000/how/deep/can/this/even/go/holy/shit/it/goes/even/deeper/omg/ok/now/it/finally/ends"
+    "http://localhost:3000/how/deep/can/this/even/go/holy/shit/it/goes/even/deeper/omg/ok/now/it/finally/ends",
   );
   await app.fetch(r6);
 
@@ -200,7 +200,7 @@ Deno.bench("itty-router", { group: "timing" }, async () => {
           "content-type": "text/plain; charset=utf-8",
         },
       });
-    }
+    },
   );
 
   router.get("/user/lookup/username/:username", (req) => {
@@ -210,7 +210,7 @@ Deno.bench("itty-router", { group: "timing" }, async () => {
         headers: {
           "content-type": "application/json; charset=utf-8",
         },
-      }
+      },
     );
   });
 
@@ -230,7 +230,7 @@ Deno.bench("itty-router", { group: "timing" }, async () => {
   await router.handle(r5);
 
   const r6 = new Request(
-    "http://localhost:3000/how/deep/can/this/even/go/holy/shit/it/goes/even/deeper/omg/ok/now/it/finally/ends"
+    "http://localhost:3000/how/deep/can/this/even/go/holy/shit/it/goes/even/deeper/omg/ok/now/it/finally/ends",
   );
   await router.handle(r6);
 
@@ -267,7 +267,7 @@ Deno.bench("oak", { group: "timing" }, async () => {
     "/how/deep/can/this/even/go/holy/shit/it/goes/even/deeper/omg/ok/now/it/finally/ends",
     (c) => {
       c.response.body = "Very Deeply Nested Route";
-    }
+    },
   );
 
   router.get("/user/lookup/username/:username", (c) => {
@@ -296,7 +296,7 @@ Deno.bench("oak", { group: "timing" }, async () => {
   await app.handle(r5);
 
   const r6 = new Request(
-    "http://localhost:3000/how/deep/can/this/even/go/holy/shit/it/goes/even/deeper/omg/ok/now/it/finally/ends"
+    "http://localhost:3000/how/deep/can/this/even/go/holy/shit/it/goes/even/deeper/omg/ok/now/it/finally/ends",
   );
   await app.handle(r6);
 

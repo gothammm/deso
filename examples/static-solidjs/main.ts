@@ -4,10 +4,14 @@ import { middlewares } from "../../mod.ts";
 const app = new Deso();
 
 // Run vite command to build ui
-await Deno.run({
-  cwd: path.resolve("./ui"),
-  cmd: ["pnpm", "build"],
+
+const runBuild = new Deno.Command("pnpm", {
+  args: ["build"],
+  cwd: path.resolve("ui"),
+  stdout: "inherit",
 });
+
+await runBuild.output();
 
 app.get("/*", middlewares.staticMiddleware({ assetPath: "./ui/dist" }));
 
