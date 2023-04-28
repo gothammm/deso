@@ -38,7 +38,7 @@ export class DesoRequestHandler {
         }),
       );
     }
-    // Promise.resolve().then(() => context.store.set("path_pattern", pathPattern));
+    context.store.set("path_pattern", pathPattern);
     const associatedMiddlewaresToRun = this.#registry.middlewareRegistry.get(
       requestMethod + ":" + pathPattern,
     ) ?? [];
