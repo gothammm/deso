@@ -23,7 +23,7 @@ export class Deso extends DesoRequestHandler {
    */
   before(middleware: DesoMiddlewareHandler) {
     const WILDCARD_PATH = "*";
-    const registeredMiddlewares = this.#registry.middlewareRegistry;
+    const registeredMiddlewares = this.#registry.MIDDLEWARE;
     if (!registeredMiddlewares.has(WILDCARD_PATH)) {
       registeredMiddlewares.set(WILDCARD_PATH, [middleware]);
       return;
@@ -102,21 +102,21 @@ export class Deso extends DesoRequestHandler {
     ) as Path;
     const groupMiddlewares = (this.#group.get("middlewares") ??
       []) as DesoMiddlewareHandler[];
-    this.#registry.middlewareRegistry.set(`${method}:${routePath}`, [
+    this.#registry.MIDDLEWARE.set(`${method}:${routePath}`, [
       ...groupMiddlewares,
       ...(middlewares as DesoMiddlewareHandler[]),
     ]);
     switch (method) {
       case "GET":
-        return this.#registry.getRouter.add(routePath, handler);
+        return this.#registry.GET.add(routePath, handler);
       case "DELETE":
-        return this.#registry.deleteRouter.add(routePath, handler);
+        return this.#registry.DELETE.add(routePath, handler);
       case "PUT":
-        return this.#registry.putRouter.add(routePath, handler);
+        return this.#registry.PUT.add(routePath, handler);
       case "PATCH":
-        return this.#registry.patchRouter.add(routePath, handler);
+        return this.#registry.PATCH.add(routePath, handler);
       case "POST":
-        return this.#registry.postRouter.add(routePath, handler);
+        return this.#registry.POST.add(routePath, handler);
     }
   };
 }

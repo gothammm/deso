@@ -13,7 +13,7 @@ export class DesoRequestHandler {
   }
   handle = async (request: Request, conn?: ConnInfo): Promise<Response> => {
     const context = new DesoContext(request, conn);
-    const registeredMiddlewares = this.#registry.middlewareRegistry.get("*") ??
+    const registeredMiddlewares = this.#registry.MIDDLEWARE.get("*") ??
       [];
     if (registeredMiddlewares.length <= 0) {
       return this.#runRequest(context);
@@ -39,7 +39,7 @@ export class DesoRequestHandler {
       );
     }
     context.store.set("path_pattern", pathPattern);
-    const associatedMiddlewaresToRun = this.#registry.middlewareRegistry.get(
+    const associatedMiddlewaresToRun = this.#registry.MIDDLEWARE.get(
       requestMethod + ":" + pathPattern,
     ) ?? [];
     if (params.size > 0) {
@@ -71,17 +71,17 @@ export class DesoRequestHandler {
   #getRouterRegistry(method: HttpMethod) {
     switch (method) {
       case "GET":
-        return this.#registry.getRouter;
+        return this.#registry.GET;
       case "DELETE":
-        return this.#registry.deleteRouter;
+        return this.#registry.DELETE;
       case "POST":
-        return this.#registry.postRouter;
+        return this.#registry.POST;
       case "PUT":
-        return this.#registry.putRouter;
+        return this.#registry.PUT;
       case "PATCH":
-        return this.#registry.patchRouter;
+        return this.#registry.PATCH;
       default:
-        return this.#registry.getRouter;
+        return this.#registry.GET;
     }
   }
 }
