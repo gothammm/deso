@@ -3,7 +3,6 @@ import { Registry } from "./core_registry.ts";
 import { DesoRequestHandler } from "./request_handler.ts";
 import type { DesoHandler } from "./types.ts";
 import type { ServeInit } from "./deps.ts";
-import { serve } from "./deps.ts";
 
 export class Deso extends DesoRequestHandler {
   #registry: Registry;
