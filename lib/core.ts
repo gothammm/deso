@@ -14,7 +14,7 @@ export class Deso extends DesoRequestHandler {
     this.#registry = registry;
   }
   serve = (options: ServeInit) => {
-    return serve(this.handle, options);
+    return Deno.serve(options, this.handle);
   };
   /**
    * Registers a middleware that runs before each request.
@@ -106,17 +106,6 @@ export class Deso extends DesoRequestHandler {
       ...groupMiddlewares,
       ...(middlewares as DesoMiddlewareHandler[]),
     ]);
-    switch (method) {
-      case "GET":
-        return this.#registry.GET.add(routePath, handler);
-      case "DELETE":
-        return this.#registry.DELETE.add(routePath, handler);
-      case "PUT":
-        return this.#registry.PUT.add(routePath, handler);
-      case "PATCH":
-        return this.#registry.PATCH.add(routePath, handler);
-      case "POST":
-        return this.#registry.POST.add(routePath, handler);
-    }
+    return this.#registry.router[method].add(routePath, handler);
   };
 }

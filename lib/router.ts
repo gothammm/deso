@@ -10,7 +10,6 @@ export type RouteParams = Map<string, unknown>;
 export type PathPattern = string;
 
 type RouteMatchResult<Path extends string> = [
-  Path,
   DesoHandler<Path> | undefined,
   RouteParams,
   PathPattern,
@@ -29,23 +28,16 @@ export class DesoRouter {
       this.#cache,
     );
   };
-  match = (url: string): RouteMatchResult<string> => {
-    const path = new URL(url).pathname;
+  match = (path: string): RouteMatchResult<string> => {
     if (this.#resultCache.has(path)) {
       return this.#resultCache.get(path)!;
     }
     const routeParts = path.split("/").filter((part) => part !== "");
-    const [handler, params, pathPattern] = this.#findMatch(
+    const result = this.#findMatch(
       routeParts.length <= 0 ? ["$"] : routeParts,
       this.#cache,
       { params: new Map(), path: "" },
-    );
-    const result = [
-      path,
-      handler,
-      params,
-      pathPattern,
-    ] as RouteMatchResult<string>;
+    ) as RouteMatchResult<string>;
     this.#resultCache.set(path, result);
     return result;
   };

@@ -1,4 +1,3 @@
-import type { ConnInfo } from "./deps.ts";
 import type { RouteParams } from "./router.ts";
 import {
   ClientErrorStatusCode,
@@ -11,21 +10,12 @@ export class DesoContext<Path = string> {
   #baseRequest: Request;
   #store: Map<string, unknown>;
   #responseHeaders?: Headers;
-  #connection?: ConnInfo;
-  constructor(
-    request: Request,
-    conn?: ConnInfo,
-    options?: { routeParams: RouteParams },
-  ) {
+  constructor(request: Request, options?: { routeParams: RouteParams }) {
     this.#baseRequest = request;
-    this.#connection = conn;
     this.#store = new Map<string, unknown>();
     if (options?.routeParams) {
       this.loadParams(options.routeParams);
     }
-  }
-  get connection() {
-    return this.#connection;
   }
   loadParams = (params: RouteParams) => {
     for (const [key, value] of params) {
@@ -37,6 +27,17 @@ export class DesoContext<Path = string> {
     return this.#store;
   }
   req = (): Request => this.#baseRequest;
+  parseUrl = (
+    request: Request,
+  ): {
+    pathname: string;
+    params: { [key: string]: unknown };
+  } => {
+    const [, , pathName] = request.url.match(
+      /^(https?|HTTPS?):\/\/[^\/]+(\/[^?#]*)(\?[^#]*)?[#]?.*$/,
+    ) ?? [];
+    return { pathname: pathName, params: {} };
+  };
   param = <T extends unknown>(key: ParamKeys<Path>): T | undefined => {
     const paramValue = this.#store.get("params:" + key);
     return (paramValue as T) ?? undefined;

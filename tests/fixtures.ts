@@ -11,8 +11,10 @@ export async function desoServer(
   await app.serve({
     port,
     signal,
-    onListen: async ({ hostname, port }) => {
-      const baseUrl = `http://${hostname}:${port}`;
+    onListen: async (options) => {
+      const baseUrl = `http://${
+        options.hostname ?? "localhost"
+      }:${options.port}`;
       await assertionBlock(baseUrl);
       controller.abort();
     },

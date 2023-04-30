@@ -26,6 +26,8 @@ app.get(
 await app.serve({ port: 3000 });
 ```
 
+> **Note**: Requires --unstable flag as it uses `Deno.serve` API under the hood.
+
 ## Features
 
 - ✅ router - handle GET,POST,PUT,PATCH,DELETE

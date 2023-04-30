@@ -1,7 +1,6 @@
 import { assert, assertEquals, assertExists } from "./deps.ts";
 import { DesoRouter } from "../lib/router.ts";
 import { DesoContext } from "../lib/context.ts";
-import type { ConnInfo } from "./deps.ts";
 
 const dummyRequest = (path: string) => new Request(`https://dummy.com${path}`);
 
@@ -14,12 +13,12 @@ Deno.test("returns a matching handler for a simple route", async () => {
 
   // when
   const request = dummyRequest("/hello");
-  const [path, handler] = router.match(request.url);
+  const context = new DesoContext(request);
+  const [handler] = router.match(context.parseUrl(request).pathname);
 
   // then
   assertExists(handler);
-  assertEquals(path, new URL(request.url).pathname);
-  const response = await handler(new DesoContext(request, {} as ConnInfo));
+  const response = await handler(new DesoContext(request));
   assertEquals(await response.text(), expectedResponseText);
 });
 
@@ -32,11 +31,11 @@ Deno.test("returns undefined handler if no matching route is found", () => {
 
   // when
   const request = dummyRequest("/test");
-  const [path, handler] = router.match(request.url);
+  const context = new DesoContext(request);
+  const [handler] = router.match(context.parseUrl(request).pathname);
 
   // then
   assert(handler === undefined);
-  assertEquals(path, new URL(request.url).pathname);
 });
 
 Deno.test(
@@ -53,14 +52,14 @@ Deno.test(
 
     // when
     const request = dummyRequest("/hello/peter");
-    const [path, handler, params] = router.match(request.url);
+    const context = new DesoContext(request);
+    const [handler, params] = router.match(context.parseUrl(request).pathname);
 
     // then
     assertExists(handler);
-    assertEquals(path, new URL(request.url).pathname);
     assertEquals(params, new Map([["name", "peter"]]));
     const response = await handler(
-      new DesoContext(request, {} as ConnInfo, { routeParams: params }),
+      new DesoContext(request, { routeParams: params }),
     );
     assertEquals(await response.text(), expectedResponseText("peter"));
   },
@@ -83,11 +82,11 @@ Deno.test(
 
     // when
     const request = dummyRequest("/hello/peter/id/2");
-    const [path, handler, params] = router.match(request.url);
+    const context = new DesoContext(request);
+    const [handler, params] = router.match(context.parseUrl(request).pathname);
 
     // then
     assertExists(handler);
-    assertEquals(path, new URL(request.url).pathname);
     assertEquals(
       params,
       new Map([
@@ -96,7 +95,7 @@ Deno.test(
       ]),
     );
     const response = await handler(
-      new DesoContext(request, {} as ConnInfo, { routeParams: params }),
+      new DesoContext(request, { routeParams: params }),
     );
     assertEquals(await response.text(), expectedResponseText("peter:2"));
   },

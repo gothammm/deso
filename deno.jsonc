@@ -1,17 +1,13 @@
 {
   "lock": false,
   "tasks": {
-    "test": "deno test --allow-net",
+    "test": "deno test --unstable --allow-net",
     "check": "deno fmt && deno lint && deno task test"
   },
   "fmt": {
-    "files": {
-      "exclude": ["examples/static-solidjs/ui"]
-    }
+    "exclude": ["examples/static-solidjs/ui"]
   },
   "lint": {
-    "files": {
-      "exclude": ["examples/static-solidjs/ui"]
-    }
+    "exclude": ["examples/static-solidjs/ui"]
   }
 }
