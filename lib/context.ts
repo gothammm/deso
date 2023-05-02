@@ -1,4 +1,4 @@
-import type { RouteParams } from "./router.ts";
+import type { RouteParams, SearchParams } from "./types.ts";
 import {
   ClientErrorStatusCode,
   JSONValue,
@@ -17,7 +17,7 @@ export class DesoContext<Path = string> {
       this.loadParams(options.routeParams);
     }
   }
-  loadParams = (params: RouteParams) => {
+  loadParams = (params: RouteParams | SearchParams) => {
     for (const [key, value] of params) {
       this.#store.set("params:" + key, value);
     }

@@ -2,6 +2,7 @@ import type { DesoMiddlewareHandler } from "./types.ts";
 import { Registry } from "./core_registry.ts";
 import { HttpMethod } from "./types.ts";
 import { DesoContext } from "./context.ts";
+import { parseUrl } from "./url.ts";
 
 export class DesoRequestHandler {
   #registry: Registry = new Registry();
@@ -22,7 +23,13 @@ export class DesoRequestHandler {
   };
   async #runRequest(context: DesoContext): Promise<Response> {
     const request = context.req();
-    const { pathname } = context.parseUrl(request);
+    const urlParts = parseUrl(request.url);
+    if (!urlParts) {
+      return Promise.resolve(
+        new Response(`400 - Bad Request - URL Malformed`, { status: 400 }),
+      );
+    }
+    const { pathname, searchParams } = urlParts;
     const requestMethod: HttpMethod = request.method as HttpMethod;
     const routerRegistry = this.#registry.router[requestMethod];
     const [handler, params, pathPattern] = routerRegistry.match(pathname) ?? [];
@@ -36,8 +43,9 @@ export class DesoRequestHandler {
     context.store.set("path_pattern", pathPattern);
     const associatedMiddlewaresToRun =
       this.#registry.MIDDLEWARE.get(requestMethod + ":" + pathPattern) ?? [];
-    if (params.size > 0) {
-      context.loadParams(params);
+
+    if (params.size > 0 || searchParams.size > 0) {
+      context.loadParams(params).loadParams(searchParams);
     }
     if (associatedMiddlewaresToRun.length <= 0) {
       return handler(context);

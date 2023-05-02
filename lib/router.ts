@@ -1,11 +1,9 @@
-import type { DesoHandler } from "./types.ts";
+import type { DesoHandler, RouteParams } from "./types.ts";
 import { crawl } from "./util.ts";
 
 type RoutingCache<T = string> = Map<string, RoutingCache<T> | DesoHandler<T>>;
 
 type RouteOptions = { params: Map<string, unknown>; path: string };
-
-export type RouteParams = Map<string, unknown>;
 
 export type PathPattern = string;
 

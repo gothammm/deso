@@ -33,7 +33,7 @@ await app.serve({ port: 3000 });
 - ✅ router - handle GET,POST,PUT,PATCH,DELETE
   - ✅ route grouping
   - ✅ path params
-  - ❌ query params
+  - ✅ query params
 - ✅ middlewares
   - ✅ route level middlewares
   - ✅ app level middlewares

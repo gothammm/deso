@@ -49,3 +49,7 @@ type Range<F extends number, T extends number> = Exclude<
 
 export type ClientErrorStatusCode = Range<400, 499>;
 export type ServerErrorStatusCode = Range<500, 599>;
+
+type Params = Map<string, unknown>;
+export type RouteParams = Params;
+export type SearchParams = Params;
