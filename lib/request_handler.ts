@@ -9,7 +9,7 @@ export class DesoRequestHandler {
   constructor(registry: Registry) {
     this.#registry = registry;
   }
-  handle = async (request: Request): Promise<Response> => {
+  fetch = async (request: Request): Promise<Response> => {
     const context = new DesoContext(request);
     const registeredMiddlewares = this.#registry.MIDDLEWARE.get("*") ?? [];
     if (registeredMiddlewares.length <= 0) {

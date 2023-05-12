@@ -13,7 +13,7 @@ export class Deso extends DesoRequestHandler {
     this.#registry = registry;
   }
   serve = (options: ServeInit) => {
-    return Deno.serve(options, this.handle);
+    return Deno.serve(options, this.fetch);
   };
   /**
    * Registers a middleware that runs before each request.

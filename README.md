@@ -7,6 +7,7 @@
 - [Quick Start](#quick-start)
 - [Features](#features)
 - [The `Deso` class](#the-deso-class)
+- [Router](#router)
 
 ## Quick Start
 
@@ -24,6 +25,8 @@ app.get(
 );
 
 await app.serve({ port: 3000 });
+
+// > deno run --unstable --allow-net main.ts
 ```
 
 > **Note**: Requires --unstable flag as it uses `Deno.serve` API under the hood.
@@ -32,15 +35,13 @@ await app.serve({ port: 3000 });
 
 - ✅ router - handle GET,POST,PUT,PATCH,DELETE
   - ✅ route grouping
-  - ✅ path params
-  - ✅ query params
+  - ✅ path and query params
 - ✅ middlewares
   - ✅ route level middlewares
   - ✅ app level middlewares
   - ✅ route groups level middlewares
 - ✅ response - json / text / html / css / js
 - ✅ body - json / formdata
-- ❌ schema validation
 
 > **Note**: anything marked as ❌ is unavailable at the moment, and is planned /
 > to be implemented.
@@ -139,6 +140,53 @@ to summarize, use route level middleware for more route focused precursor type
 operations, use `.before` to run it for every request irrespective of what the
 route responds.
 
-### Lets talk about router.
+### Router
 
-<em>WIP</em>
+#### Basic Routing
+
+```ts
+app.get("/", (context) => context.text("GET /"));
+app.post("/", (context) => context.text("GET /"));
+app.put("/", (context) => context.text("GET /"));
+app.delete("/", (context) => context.text("GET /"));
+
+// Any HTTP method.
+app.any("/hello", (context) => context.text("Any method /hello"));
+```
+
+#### Path Parameter
+
+```ts
+app.get("/hello/:name", (context) => {
+  const name = context.param("name");
+  return context.text(`Hello ${name}`);
+});
+```
+
+#### Path Parameter with Regex
+
+```ts
+app.get("/id/:id([0-9]+)", context => { 
+  const name = context.param("id");
+  ...
+});
+
+app.get("/name/:name([a-z]+)", context => { 
+  const name = context.param("name");
+  ...
+});
+```
+
+#### Grouped Routes
+
+```ts
+app.group("/posts", () => {
+  app.get("/", (context) => context.text("All Posts"));
+  app.get("/:id", (context) => {
+    const postId = context.param("id");
+    return context.text(`Get Post Id: ${postId}`);
+  });
+
+  app.post("/", (context) => context.text("Create Post"));
+});
+```
