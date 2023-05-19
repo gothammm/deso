@@ -78,6 +78,12 @@ export class Deso extends DesoRequestHandler {
   ) => {
     this.#register("DELETE", path, ...handlers);
   };
+  head = <Path extends string>(
+    path: Path,
+    ...handlers: [...DesoMiddlewareHandler<Path>[], DesoHandler<Path>]
+  ) => {
+    this.#register("HEAD", path, ...handlers);
+  };
   any = <Path extends string>(
     path: Path,
     ...handlers: [...DesoMiddlewareHandler<Path>[], DesoHandler<Path>]
