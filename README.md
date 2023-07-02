@@ -5,7 +5,6 @@
 ## Table of content
 
 - [Quick Start](#quick-start)
-- [Features](#features)
 - [The `Deso` class](#the-deso-class)
 - [Router](#router)
 
@@ -30,21 +29,6 @@ await app.serve({ port: 3000 });
 ```
 
 > **Note**: Requires --unstable flag as it uses `Deno.serve` API under the hood.
-
-## Features
-
-- ✅ router - handle GET,POST,PUT,PATCH,DELETE
-  - ✅ route grouping
-  - ✅ path and query params
-- ✅ middlewares
-  - ✅ route level middlewares
-  - ✅ app level middlewares
-  - ✅ route groups level middlewares
-- ✅ response - json / text / html / css / js
-- ✅ body - json / formdata
-
-> **Note**: anything marked as ❌ is unavailable at the moment, and is planned /
-> to be implemented.
 
 ## The `Deso` class
 
