@@ -25,7 +25,7 @@ app.get(
 
 await app.serve({ port: 3000 });
 
-// > deno run --unstable --allow-net main.ts
+// > deno run --allow-net main.ts
 ```
 
 > **Note**: Requires --unstable flag as it uses `Deno.serve` API under the hood.
