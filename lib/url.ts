@@ -1,3 +1,5 @@
+import { URL_REGEX } from "./constants.ts";
+
 interface URL {
   pathname: string;
   searchParams: Map<string, string>;
@@ -5,9 +7,7 @@ interface URL {
 }
 
 export const parseUrl = (url: string): URL | undefined => {
-  const matchGroups = url.match(
-    /^(https?|HTTPS?):\/\/([^\/\?#]+)(\/[^?\s]*)?(\?[^#\s]*)?(#[^\s]*)?$/,
-  );
+  const matchGroups = url.match(URL_REGEX);
 
   if (!matchGroups) {
     return;

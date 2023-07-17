@@ -1,6 +1,7 @@
 import { assert, assertEquals, assertExists } from "./deps.ts";
 import { DesoRouter } from "../lib/router.ts";
 import { DesoContext } from "../lib/context.ts";
+import { parseUrl } from "../lib/url.ts";
 
 const dummyRequest = (path: string) => new Request(`https://dummy.com${path}`);
 
@@ -13,8 +14,7 @@ Deno.test("returns a matching handler for a simple route", async () => {
 
   // when
   const request = dummyRequest("/hello");
-  const context = new DesoContext(request);
-  const [handler] = router.match(context.parseUrl(request).pathname);
+  const [handler] = router.match(parseUrl(request.url)?.pathname ?? "");
 
   // then
   assertExists(handler);
@@ -31,8 +31,7 @@ Deno.test("returns undefined handler if no matching route is found", () => {
 
   // when
   const request = dummyRequest("/test");
-  const context = new DesoContext(request);
-  const [handler] = router.match(context.parseUrl(request).pathname);
+  const [handler] = router.match(parseUrl(request.url)?.pathname ?? "");
 
   // then
   assert(handler === undefined);
@@ -52,8 +51,9 @@ Deno.test(
 
     // when
     const request = dummyRequest("/hello/peter");
-    const context = new DesoContext(request);
-    const [handler, params] = router.match(context.parseUrl(request).pathname);
+    const [handler, params] = router.match(
+      parseUrl(request.url)?.pathname ?? "",
+    );
 
     // then
     assertExists(handler);
@@ -82,8 +82,9 @@ Deno.test(
 
     // when
     const request = dummyRequest("/hello/peter/id/2");
-    const context = new DesoContext(request);
-    const [handler, params] = router.match(context.parseUrl(request).pathname);
+    const [handler, params] = router.match(
+      parseUrl(request.url)?.pathname ?? "",
+    );
 
     // then
     assertExists(handler);

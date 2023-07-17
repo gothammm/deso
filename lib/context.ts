@@ -9,6 +9,8 @@ import {
 export class DesoContext<Path = string> {
   #baseRequest: Request;
   #store: Map<string, unknown>;
+  #PARAM_KEY = "params:";
+  #REQ_CONTEXT_KEY = "req:context:";
   #responseHeaders?: Headers;
   constructor(request: Request, options?: { routeParams: RouteParams }) {
     this.#baseRequest = request;
@@ -19,7 +21,7 @@ export class DesoContext<Path = string> {
   }
   loadParams = (params: RouteParams | SearchParams) => {
     for (const [key, value] of params) {
-      this.#store.set("params:" + key, value);
+      this.#store.set(this.#PARAM_KEY + key, value);
     }
     return this;
   };
@@ -27,17 +29,6 @@ export class DesoContext<Path = string> {
     return this.#store;
   }
   req = (): Request => this.#baseRequest;
-  parseUrl = (
-    request: Request,
-  ): {
-    pathname: string;
-    params: { [key: string]: unknown };
-  } => {
-    const [, , pathName] = request.url.match(
-      /^(https?|HTTPS?):\/\/[^\/]+(\/[^?#]*)(\?[^#]*)?[#]?.*$/,
-    ) ?? [];
-    return { pathname: pathName, params: {} };
-  };
   param = <T extends unknown>(key: ParamKeys<Path>): T | undefined => {
     const paramValue = this.#store.get("params:" + key);
     return (paramValue as T) ?? undefined;
@@ -104,11 +95,11 @@ export class DesoContext<Path = string> {
     }
     return this.#responseHeaders;
   }
-  set = (key: string, value: unknown): void => {
-    this.#store.set(`req:context:${key}`, value);
+  set = <V = unknown>(key: string, value: V): void => {
+    this.#store.set(this.#REQ_CONTEXT_KEY + key, value);
   };
-  get = <K extends string, V = unknown>(key: K): V | undefined =>
-    (this.#store.get(`req:context:${key}`) as V) ?? undefined;
+  get = <V = unknown>(key: string): V | undefined =>
+    (this.#store.get(this.#REQ_CONTEXT_KEY + key) as V) ?? undefined;
   get #responseInit() {
     return this.#responseHeaders
       ? { headers: this.#responseHeaders }
