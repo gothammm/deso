@@ -1,3 +1,4 @@
+import { HttpStatus } from "./deps.ts";
 import type { RouteParams, SearchParams } from "./types.ts";
 import {
   ClientErrorStatusCode,
@@ -12,9 +13,15 @@ export class DesoContext<Path = string> {
   #PARAM_KEY = "params:";
   #REQ_CONTEXT_KEY = "req:context:";
   #responseHeaders?: Headers;
-  constructor(request: Request, options?: { routeParams: RouteParams }) {
+  constructor(
+    request: Request,
+    options?: {
+      routeParams?: RouteParams;
+      contextStorage?: Map<string, unknown>;
+    },
+  ) {
     this.#baseRequest = request;
-    this.#store = new Map<string, unknown>();
+    this.#store = options?.contextStorage ?? new Map<string, unknown>();
     if (options?.routeParams) {
       this.loadParams(options.routeParams);
     }
@@ -45,17 +52,24 @@ export class DesoContext<Path = string> {
     }
     return await incomingRequest.formData();
   }
-  json = (data: JSONValue): Response => {
-    return Response.json(data, this.#responseInit);
+  json = (data: JSONValue, status: HttpStatus = HttpStatus.OK): Response => {
+    return Response.json(
+      data,
+      Object.assign(this.#responseInit ?? {}, { status }),
+    );
   };
-  html = (value: string): Response => {
+  html = (value: string, status: HttpStatus = HttpStatus.OK): Response => {
     if (!this.#responseHeaders) {
       this.#responseHeaders = new Headers();
     }
     this.#responseHeaders?.set("Content-Type", "text/html");
-    return new Response(value, this.#responseInit);
+    return new Response(
+      value,
+      Object.assign(this.#responseInit ?? {}, { status }),
+    );
   };
-  text = (value: string): Response => new Response(value, this.#responseInit);
+  text = (value: string, status: HttpStatus = HttpStatus.OK): Response =>
+    new Response(value, Object.assign(this.#responseInit ?? {}, { status }));
   oops = (
     value: string | JSONValue | Error,
     status: ClientErrorStatusCode | ServerErrorStatusCode,

@@ -5,15 +5,16 @@ import type { DesoHandler } from "./types.ts";
 import type { ServeInit } from "./deps.ts";
 import { AsyncLocalStorage } from "node:async_hooks";
 
-export class Deso extends DesoRequestHandler {
+export class Deso {
   #registry: Registry;
   #group = new Map<string, unknown>();
+  #requestHandler: DesoRequestHandler;
   #contextStorage = new AsyncLocalStorage();
+  /**
+   * @param {Object} config Deso Configuration
+   * @param {boolean} config.enableAsyncLocalStorage Runs AsyncLocalStorage hook for each request, enabling this would force the context to use this storage
+   */
   constructor(
-    /**
-     * @param {Object} config Deso Configuration
-     * @param {boolean} config.enableAsyncLocalStorage Runs AsyncLocalStorage hook for each request.
-     */
     private config: {
       enableAsyncLocalStorage: boolean;
     } = {
@@ -21,18 +22,22 @@ export class Deso extends DesoRequestHandler {
     },
   ) {
     const registry = new Registry();
-    super(registry);
+    this.#requestHandler = new DesoRequestHandler(registry);
     this.#registry = registry;
   }
+  fetch = (request: Request) => this.#requestHandler.fetch(request);
   serve = (options: ServeInit) => {
     const server = Deno.serve(options, (request) => {
       if (this.config.enableAsyncLocalStorage) {
         return this.#contextStorage.run(
           new Map<string, unknown>(),
-          () => this.fetch(request),
+          () =>
+            this.#requestHandler.fetch(request, {
+              contextStorage: this.als,
+            }),
         );
       }
-      return this.fetch(request);
+      return this.#requestHandler.fetch(request);
     });
     return server.finished;
   };
