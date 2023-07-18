@@ -28,8 +28,6 @@ await app.serve({ port: 3000 });
 // > deno run --allow-net main.ts
 ```
 
-> **Note**: Requires --unstable flag as it uses `Deno.serve` API under the hood.
-
 ## The `Deso` class
 
 The `Deso` is the entry class, that runs the server, middlewares, define routes.
