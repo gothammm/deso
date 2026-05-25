@@ -5,9 +5,9 @@ const app = new Deso();
 app.group(
   "/id",
   // Group level middleware.
-  (context) => {
+  (context, next) => {
     context.set("request-id", crypto.randomUUID());
-    return Promise.resolve(undefined);
+    return next();
   },
   () => {
     app.get("/:id/rest", (context) => {

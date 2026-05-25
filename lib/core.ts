@@ -1,150 +1,222 @@
-import type { DesoMiddlewareHandler, HttpMethod } from "./types.ts";
+import { AsyncLocalStorage } from "node:async_hooks";
 import { Registry } from "./core_registry.ts";
 import { DesoRequestHandler } from "./request_handler.ts";
-import type { DesoHandler } from "./types.ts";
-import type { ServeInit } from "./deps.ts";
-import { AsyncLocalStorage } from "node:async_hooks";
+import type { DesoHandler, DesoMiddleware, HttpMethod } from "./types.ts";
+import type { WsHandlers } from "./ws/mod.ts";
+import { wsHandler } from "./ws/mod.ts";
 
 export class Deso {
   #registry: Registry;
-  #group = new Map<string, unknown>();
   #requestHandler: DesoRequestHandler;
-  #contextStorage = new AsyncLocalStorage();
-  /**
-   * @param {Object} config Deso Configuration
-   * @param {boolean} config.enableAsyncLocalStorage Runs AsyncLocalStorage hook for each request, enabling this would force the context to use this storage
-   */
-  constructor(
-    private config: {
-      enableAsyncLocalStorage: boolean;
-    } = {
-      enableAsyncLocalStorage: false,
-    },
-  ) {
-    const registry = new Registry();
-    this.#requestHandler = new DesoRequestHandler(registry);
-    this.#registry = registry;
+  #contextStorage = new AsyncLocalStorage<Map<string, unknown>>();
+  #groupStack: Array<{ prefix: string; middlewares: DesoMiddleware[] }> = [];
+  #config: { enableAsyncLocalStorage: boolean };
+
+  constructor(config: { enableAsyncLocalStorage?: boolean } = {}) {
+    this.#config = {
+      enableAsyncLocalStorage: config.enableAsyncLocalStorage ?? false,
+    };
+    this.#registry = new Registry();
+    this.#requestHandler = new DesoRequestHandler(this.#registry);
   }
-  fetch = (request: Request) => this.#requestHandler.fetch(request);
-  serve = (options: ServeInit) => {
-    const server = Deno.serve(options, (request) => {
-      if (this.config.enableAsyncLocalStorage) {
-        return this.#contextStorage.run(
-          new Map<string, unknown>(),
-          () =>
-            this.#requestHandler.fetch(request, {
-              contextStorage: this.als,
-            }),
-        );
+
+  serve(options: Deno.ServeTcpOptions = { port: 3000 }): Promise<void> {
+    if (options.signal) {
+      const server = Deno.serve(options, (request) => this.fetch(request));
+      return server.finished;
+    }
+
+    const ac = new AbortController();
+    const server = Deno.serve(
+      { ...options, signal: ac.signal },
+      (request) => this.fetch(request),
+    );
+
+    const shutdown = () => {
+      try {
+        ac.abort();
+      } catch {
+        // already aborted
       }
-      return this.#requestHandler.fetch(request);
+    };
+
+    Deno.addSignalListener("SIGINT", shutdown);
+    Deno.addSignalListener("SIGTERM", shutdown);
+
+    return server.finished.finally(() => {
+      try {
+        Deno.removeSignalListener("SIGINT", shutdown);
+      } catch {
+        /* not registered */
+      }
+      try {
+        Deno.removeSignalListener("SIGTERM", shutdown);
+      } catch {
+        /* not registered */
+      }
     });
-    return server.finished;
+  }
+
+  fetch = (request: Request): Promise<Response> => {
+    if (this.#config.enableAsyncLocalStorage) {
+      return this.#contextStorage.run(
+        new Map<string, unknown>(),
+        () =>
+          this.#requestHandler.fetch(request, {
+            contextStorage: this.als,
+          }),
+      );
+    }
+    return this.#requestHandler.fetch(request);
   };
-  /**
-   * Returns the async local storage for the app.
-   * The async local storage only works when the app config `enableAsyncLocalStorage` is set to `true`
-   * @returns {Map<string, unknown>}
-   */
+
   get als(): Map<string, unknown> | undefined {
-    return this.#contextStorage.getStore() as Map<string, unknown>;
+    return this.#contextStorage.getStore() as Map<string, unknown> | undefined;
   }
-  /**
-   * Registers a middleware that runs before each request.
-   * @param {DesoMiddlewareHandler} middleware
-   * @returns {void}
-   */
-  before(middleware: DesoMiddlewareHandler) {
-    const WILDCARD_PATH = "*";
-    const registeredMiddlewares = this.#registry.MIDDLEWARE;
-    if (!registeredMiddlewares.has(WILDCARD_PATH)) {
-      registeredMiddlewares.set(WILDCARD_PATH, [middleware]);
-      return;
+
+  use(...middlewares: DesoMiddleware[]): void {
+    for (const middleware of middlewares) {
+      this.#registry.addGlobalMiddleware(middleware);
     }
-    const existingMiddlewareHandlers = registeredMiddlewares.get("*") ?? [];
-    registeredMiddlewares.set(
-      WILDCARD_PATH,
-      existingMiddlewareHandlers.concat(middleware),
-    );
-    return;
   }
-  group = <Path extends string>(
+
+  group<Path extends string>(
     path: Path,
-    ...handlers: [...DesoMiddlewareHandler<Path>[], () => void]
-  ) => {
-    if (handlers.length <= 0) {
-      return;
+    ...handlers: [...DesoMiddleware[], (core: Deso) => void]
+  ): void {
+    if (handlers.length === 0) return;
+    const callback = handlers.pop() as (core: Deso) => void;
+    const middlewares = handlers as DesoMiddleware[];
+
+    this.#groupStack.push({ prefix: path, middlewares });
+    try {
+      callback(this);
+    } finally {
+      this.#groupStack.pop();
     }
-    const [groupHandler] = handlers.slice(-1) as ((core: Deso) => void)[];
-    const groupMiddlewares: unknown = handlers.slice(0, handlers.length - 1);
-    this.#group.set("middlewares", groupMiddlewares);
-    this.#group.set("prefix", path);
-    groupHandler(this);
-    this.#group.clear();
-  };
-  get = <Path extends string>(
+  }
+
+  get<Path extends string>(
     path: Path,
-    ...handlers: [...DesoMiddlewareHandler<Path>[], DesoHandler<Path>]
-  ) => {
-    this.#register("GET", path, ...handlers);
-  };
-  post = <Path extends string>(
+    ...handlers: [...DesoMiddleware[], DesoHandler<Path>]
+  ): void {
+    this.#register("GET" as HttpMethod, path, ...handlers);
+  }
+
+  post<Path extends string>(
     path: Path,
-    ...handlers: [...DesoMiddlewareHandler<Path>[], DesoHandler<Path>]
-  ) => {
-    this.#register("POST", path, ...handlers);
-  };
-  put = <Path extends string>(
+    ...handlers: [...DesoMiddleware[], DesoHandler<Path>]
+  ): void {
+    this.#register("POST" as HttpMethod, path, ...handlers);
+  }
+
+  put<Path extends string>(
     path: Path,
-    ...handlers: [...DesoMiddlewareHandler<Path>[], DesoHandler<Path>]
-  ) => {
-    this.#register("PUT", path, ...handlers);
-  };
-  patch = <Path extends string>(
+    ...handlers: [...DesoMiddleware[], DesoHandler<Path>]
+  ): void {
+    this.#register("PUT" as HttpMethod, path, ...handlers);
+  }
+
+  patch<Path extends string>(
     path: Path,
-    ...handlers: [...DesoMiddlewareHandler<Path>[], DesoHandler<Path>]
-  ) => {
-    this.#register("PATCH", path, ...handlers);
-  };
-  ["delete"] = <Path extends string>(
+    ...handlers: [...DesoMiddleware[], DesoHandler<Path>]
+  ): void {
+    this.#register("PATCH" as HttpMethod, path, ...handlers);
+  }
+
+  delete<Path extends string>(
     path: Path,
-    ...handlers: [...DesoMiddlewareHandler<Path>[], DesoHandler<Path>]
-  ) => {
-    this.#register("DELETE", path, ...handlers);
-  };
-  head = <Path extends string>(
+    ...handlers: [...DesoMiddleware[], DesoHandler<Path>]
+  ): void {
+    this.#register("DELETE" as HttpMethod, path, ...handlers);
+  }
+
+  head<Path extends string>(
     path: Path,
-    ...handlers: [...DesoMiddlewareHandler<Path>[], DesoHandler<Path>]
-  ) => {
-    this.#register("HEAD", path, ...handlers);
-  };
-  any = <Path extends string>(
+    ...handlers: [...DesoMiddleware[], DesoHandler<Path>]
+  ): void {
+    this.#register("HEAD" as HttpMethod, path, ...handlers);
+  }
+
+  options<Path extends string>(
     path: Path,
-    ...handlers: [...DesoMiddlewareHandler<Path>[], DesoHandler<Path>]
-  ) => {
-    (["GET", "PATCH", "HEAD", "PUT", "POST", "PATCH"] as HttpMethod[]).forEach(
-      (method: HttpMethod) => this.#register(method, path, ...handlers),
+    ...handlers: [...DesoMiddleware[], DesoHandler<Path>]
+  ): void {
+    this.#register("OPTIONS" as HttpMethod, path, ...handlers);
+  }
+
+  any<Path extends string>(
+    path: Path,
+    ...handlers: [...DesoMiddleware[], DesoHandler<Path>]
+  ): void {
+    const methods: HttpMethod[] = [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "HEAD",
+      "OPTIONS",
+    ];
+    for (const method of methods) {
+      this.#register(method, path, ...handlers);
+    }
+  }
+
+  ws<Path extends string>(
+    path: Path,
+    ...handlers: [...DesoMiddleware[], WsHandlers]
+  ): void {
+    const wsHandlers = handlers.pop() as WsHandlers;
+    const middlewares = handlers as DesoMiddleware[];
+    this.#register(
+      "GET" as HttpMethod,
+      path,
+      ...middlewares,
+      wsHandler(wsHandlers) as DesoHandler<Path>,
     );
-  };
-  #register = <Path extends string>(
+  }
+
+  #register<Path extends string>(
     method: HttpMethod,
     path: Path,
-    ...handlers: [...DesoMiddlewareHandler<Path>[], DesoHandler<Path>]
-  ) => {
-    if (handlers.length <= 0) {
-      return;
+    ...handlers: [...DesoMiddleware[], DesoHandler<Path>]
+  ): void {
+    if (handlers.length === 0) return;
+
+    const handler = handlers.pop() as DesoHandler<Path>;
+    const middlewares = handlers as DesoMiddleware[];
+
+    const effectivePath = this.#getEffectivePath(path);
+    const effectiveMiddlewares = this.#getEffectiveMiddlewares(middlewares);
+
+    if (effectiveMiddlewares.length > 0) {
+      this.#registry.setRouteMiddlewares(
+        method,
+        effectivePath,
+        effectiveMiddlewares,
+      );
     }
-    const [handler] = handlers.slice(-1) as DesoHandler<Path>[];
-    const middlewares: unknown = handlers.slice(0, handlers.length - 1);
-    const routePath = (
-      this.#group.has("prefix") ? `${this.#group.get("prefix")}${path}` : path
-    ) as Path;
-    const groupMiddlewares = (this.#group.get("middlewares") ??
-      []) as DesoMiddlewareHandler[];
-    this.#registry.MIDDLEWARE.set(`${method}:${routePath}`, [
-      ...groupMiddlewares,
-      ...(middlewares as DesoMiddlewareHandler[]),
-    ]);
-    return this.#registry.router[method].add(routePath, handler);
-  };
+
+    this.#registry.addRoute(method, effectivePath, handler);
+  }
+
+  #getEffectivePath(path: string): string {
+    let result = path;
+    for (let i = this.#groupStack.length - 1; i >= 0; i--) {
+      const group = this.#groupStack[i];
+      // Only prepend prefix if path doesn't already start with it
+      if (!result.startsWith(group.prefix)) {
+        result = group.prefix + result;
+      }
+    }
+    return result;
+  }
+
+  #getEffectiveMiddlewares(
+    routeMiddlewares: DesoMiddleware[],
+  ): DesoMiddleware[] {
+    const groupMiddlewares = this.#groupStack.flatMap((g) => g.middlewares);
+    return [...groupMiddlewares, ...routeMiddlewares];
+  }
 }

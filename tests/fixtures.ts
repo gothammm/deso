@@ -1,22 +1,19 @@
-import { Deso } from "../mod.ts";
+import type { Deso } from "../mod.ts";
 
 export async function desoServer(
   app: Deso,
-  assertionBlock: (baseUrl: string) => void,
+  assertionBlock: (baseUrl: string) => Promise<void>,
 ) {
-  const port = 0;
-  const controller = new AbortController();
-  const { signal } = controller;
+  const ac = new AbortController();
+  const { signal } = ac;
 
   await app.serve({
-    port,
+    port: 0,
     signal,
-    onListen: async (options) => {
-      const baseUrl = `http://${
-        options.hostname ?? "localhost"
-      }:${options.port}`;
+    onListen: async (addr: Deno.NetAddr) => {
+      const baseUrl = `http://${addr.hostname}:${addr.port}`;
       await assertionBlock(baseUrl);
-      controller.abort();
+      ac.abort();
     },
   });
 }

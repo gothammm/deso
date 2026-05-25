@@ -1,7 +1,7 @@
-import { Deso, middlewares } from "../../mod.ts";
+import { Deso, staticMiddleware } from "../../mod.ts";
 
 const app = new Deso();
 
-app.get("/*", middlewares.staticMiddleware({ assetPath: "./assets" }));
+app.get("/*", staticMiddleware({ assetPath: "./assets" }));
 
 await app.serve({ port: 3000 });

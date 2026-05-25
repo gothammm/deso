@@ -1,80 +1,105 @@
-import type { DesoMiddlewareHandler, JSONValue } from "./types.ts";
-import { Registry } from "./core_registry.ts";
-import { HttpMethod } from "./types.ts";
+import { compose } from "./compositor.ts";
 import { DesoContext } from "./context.ts";
-import { parseUrl } from "./url.ts";
+import type { Registry } from "./core_registry.ts";
+import { STATUS_CODE } from "./deps.ts";
+import type { DesoMiddleware, HttpMethod } from "./types.ts";
 
 export class DesoRequestHandler {
-  constructor(private registry: Registry) {}
-  fetch = async (
+  #registry: Registry;
+
+  constructor(registry: Registry) {
+    this.#registry = registry;
+  }
+
+  async fetch(
     request: Request,
     options?: {
       contextStorage?: Map<string, unknown>;
     },
-  ): Promise<Response> => {
+  ): Promise<Response> {
     const context = new DesoContext(request, options);
+
     try {
-      const registeredMiddlewares = this.registry.MIDDLEWARE.get("*") ?? [];
-      if (registeredMiddlewares.length <= 0) {
-        return await this.#runRequest(context);
-      }
-      const middlewareResult = await this.#runMiddlewares(
-        registeredMiddlewares,
-        context,
-      );
-      return middlewareResult ?? (await this.#runRequest(context));
-    } catch (e) {
-      return context.oops(e satisfies JSONValue, e.status ?? 500);
+      return await this.#handleRequest(context);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const status = error instanceof Error && "status" in error
+        ? (error as Error & { status: number }).status
+        : STATUS_CODE.InternalServerError;
+      return context.oops(message, status);
     }
-  };
-  async #runRequest(context: DesoContext): Promise<Response> {
-    const request = context.req();
-    const urlParts = parseUrl(request.url);
-    if (!urlParts) {
-      return Promise.resolve(
-        new Response(`400 - Bad Request - URL Malformed`, { status: 400 }),
-      );
-    }
-    const { pathname, searchParams } = urlParts;
-    const requestMethod: HttpMethod = request.method as HttpMethod;
-    const routerRegistry = this.registry.router[requestMethod];
-    const [handler, params, pathPattern] = routerRegistry.match(pathname) ?? [];
-    if (!handler) {
-      return context.oops(
-        `404 - ${request.method} - ${pathname} Not Found`,
-        404,
-      );
-    }
-    context.store.set("path_pattern", pathPattern);
-    const associatedMiddlewaresToRun =
-      this.registry.MIDDLEWARE.get(requestMethod + ":" + pathPattern) ?? [];
-
-    if (params.size > 0 || searchParams.size > 0) {
-      context.loadParams(params).loadParams(searchParams);
-    }
-    if (associatedMiddlewaresToRun.length <= 0) {
-      return handler(context);
-    }
-    const middlewarerResult = await this.#runMiddlewares(
-      associatedMiddlewaresToRun,
-      context,
-    );
-    return middlewarerResult ?? handler(context);
   }
-  #runMiddlewares = async (
-    middlewares: Array<DesoMiddlewareHandler>,
-    context: DesoContext,
-  ) => {
-    if (middlewares.length <= 0) {
-      return Promise.resolve();
+
+  #handleRequest(context: DesoContext): Promise<Response> {
+    const url = new URL(context.req().url);
+    const pathname = url.pathname;
+    const method = context.req().method as HttpMethod;
+
+    const globalMiddlewares = this.#registry.getGlobalMiddlewares();
+
+    if (globalMiddlewares.length > 0) {
+      return this.#runWithGlobals(context, pathname, method, globalMiddlewares);
     }
 
-    for (const middleware of middlewares) {
-      const middlewareResult = await middleware(context);
-      if (!middlewareResult) {
-        continue;
+    return this.#routeAndHandle(context, pathname, method);
+  }
+
+  #runWithGlobals(
+    context: DesoContext,
+    pathname: string,
+    method: HttpMethod,
+    middlewares: DesoMiddleware[],
+  ): Promise<Response> {
+    // deno-lint-ignore require-await
+    const dispatch = async (index: number): Promise<Response> => {
+      if (index === middlewares.length) {
+        return this.#routeAndHandle(context, pathname, method);
       }
-      return middlewareResult;
+      return middlewares[index](context, () => dispatch(index + 1));
+    };
+    return dispatch(0);
+  }
+
+  #routeAndHandle(
+    context: DesoContext,
+    pathname: string,
+    method: HttpMethod,
+  ): Promise<Response> {
+    const router = this.#registry.getRouter(method);
+    if (!router) {
+      return Promise.resolve(
+        context.oops("405 - Method Not Allowed", STATUS_CODE.MethodNotAllowed),
+      );
     }
-  };
+
+    const [handler, params, pathPattern] = router.match(pathname);
+
+    if (!handler) {
+      const isMethodNotAllowed = this.#registry.pathExistsInAnyMethod(pathname);
+      const status = isMethodNotAllowed
+        ? STATUS_CODE.MethodNotAllowed
+        : STATUS_CODE.NotFound;
+      const message = isMethodNotAllowed
+        ? `405 - ${method} ${pathname} Method Not Allowed`
+        : `404 - ${method} ${pathname} Not Found`;
+      return Promise.resolve(context.oops(message, status));
+    }
+
+    context.store.set("path_pattern", pathPattern);
+
+    if (params.size > 0) {
+      context.loadParams(params);
+    }
+
+    const routeMiddlewares = this.#registry.getRouteMiddlewares(
+      method,
+      pathPattern,
+    );
+
+    if (routeMiddlewares.length === 0) {
+      return Promise.resolve(handler(context));
+    }
+
+    return compose(routeMiddlewares, handler)(context);
+  }
 }

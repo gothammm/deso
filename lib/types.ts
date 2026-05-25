@@ -1,28 +1,29 @@
-import { DesoContext } from "./context.ts";
+import type { DesoContext } from "./context.ts";
 
-export interface RouteMatchResult {
-  path: string;
-  params: Record<string, unknown>;
-  handler: DesoHandler;
-}
+export type HttpMethod =
+  | "GET"
+  | "POST"
+  | "PUT"
+  | "PATCH"
+  | "DELETE"
+  | "HEAD"
+  | "OPTIONS";
 
-export type HttpMethod = "GET" | "POST" | "PUT" | "HEAD" | "DELETE" | "PATCH";
+export type Next = () => Promise<Response>;
 
-export type DesoHandler<Path = string, R = Response> = (
+export type DesoMiddleware<Path = string> = (
   context: DesoContext<Path>,
-) => Promise<R> | R;
+  next: Next,
+) => Response | Promise<Response>;
 
-export type DesoMiddlewareHandler<
-  Path = string,
-  R = Response | undefined,
-> = DesoHandler<Path, R>;
+export type DesoHandler<Path = string> = (
+  context: DesoContext<Path>,
+) => Response | Promise<Response>;
 
 export type JSONPrimitive = string | boolean | number | undefined | null;
 export type JSONValue = JSONObject | JSONArray | JSONPrimitive;
-export type JSONArray = Array<JSONObject | JSONPrimitive>;
-export type JSONObject = {
-  [key: string]: JSONValue;
-};
+export type JSONArray = Array<JSONValue>;
+export type JSONObject = { [key: string]: JSONValue };
 
 type ParamKeyName<NameWithPattern> = NameWithPattern extends
   `${infer Name}(${infer _Pattern})` ? Name
