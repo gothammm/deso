@@ -1,21 +1,20 @@
 {
-  "name": "vite-template-solid",
+  "name": "static-solidjs-ui",
+  "private": true,
   "version": "0.0.0",
-  "description": "",
   "scripts": {
-    "start": "vite",
     "dev": "vite",
     "build": "vite build",
-    "serve": "vite preview"
+    "preview": "vite preview"
   },
   "license": "MIT",
   "devDependencies": {
-    "typescript": "^4.9.5",
-    "vite": "^4.4.4",
-    "vite-plugin-solid": "^2.7.0"
+    "typescript": "^5.7.0",
+    "vite": "^8.0.0",
+    "vite-plugin-solid": "^2.11.0"
   },
   "dependencies": {
-    "@solidjs/router": "^0.8.2",
-    "solid-js": "^1.7.8"
+    "@solidjs/router": "^0.16.0",
+    "solid-js": "^1.9.0"
   }
 }

@@ -1,5 +1,6 @@
 import * as path from "@std/path";
 import { Deso, staticMiddleware } from "../../mod.ts";
+
 const app = new Deso();
 
 // Run vite command to build ui

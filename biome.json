@@ -1,6 +1,11 @@
 {
   "linter": {
     "enabled": true,
+    "includes": [
+      "**",
+      "!.fastembed_cache/**",
+      "!examples/static-solidjs/ui/dist/**"
+    ],
     "rules": {
       "recommended": true,
       "style": {
@@ -23,6 +28,9 @@
         "noAccumulatingSpread": "error"
       }
     }
+  },
+  "assist": {
+    "enabled": false
   },
   "formatter": {
     "enabled": false

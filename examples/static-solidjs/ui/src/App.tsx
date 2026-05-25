@@ -1,20 +1,17 @@
+import { A, HashRouter, Route } from "@solidjs/router";
 import type { Component } from "solid-js";
-import { A, hashIntegration, Route, Router, Routes } from "@solidjs/router";
-
-import logo from "./logo.svg";
 import styles from "./App.module.css";
+import logo from "./logo.svg";
 
 const App: Component = () => {
   return (
-    <Router source={hashIntegration()}>
-      <Routes>
-        <Route path="/" component={Home} />
-        <Route
-          path="/about"
-          element={<div>This site was made with Solid</div>}
-        />
-      </Routes>
-    </Router>
+    <HashRouter>
+      <Route path="/" component={Home} />
+      <Route
+        path="/about"
+        element={<div>This site was made with Solid</div>}
+      />
+    </HashRouter>
   );
 };
 
