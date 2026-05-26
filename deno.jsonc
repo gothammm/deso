@@ -1,6 +1,6 @@
 {
   "name": "@deso/core",
-  "version": "0.12.1",
+  "version": "0.12.2",
   "description": "A fast, functional Deno web framework with Zod/OpenAPI, WebSocket, and composable next()-style middleware pipeline",
   "license": "MIT",
   "exports": "./mod.ts",
