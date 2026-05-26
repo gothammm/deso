@@ -1,14 +1,38 @@
+/**
+ * CORS (Cross-Origin Resource Sharing) middleware.
+ *
+ * Sets the appropriate `Access-Control-*` headers based on the configured
+ * options. Automatically handles pre-flight `OPTIONS` requests.
+ * @module
+ */
 import type { DesoMiddleware } from "../types.ts";
 
+/** Options for the {@link cors} middleware. */
 export interface CorsOptions {
+  /** Allowed origin(s): a string, an array, or a predicate function (default `"*"`). */
   origin?: string | string[] | ((origin: string) => boolean);
+  /** Allowed HTTP methods for pre-flight (default `["GET", "POST", …]`). */
   methods?: string[];
+  /** Headers allowed in the actual request. */
   allowedHeaders?: string[];
+  /** Headers exposed to the client. */
   exposedHeaders?: string[];
+  /** Whether to include `Access-Control-Allow-Credentials`. */
   credentials?: boolean;
+  /** Pre-flight cache duration in seconds (default 86400). */
   maxAge?: number;
 }
 
+/**
+ * CORS middleware. Sets `Access-Control-*` headers on every response and
+ * short-circuits `OPTIONS` pre-flight requests with a 204.
+ *
+ * @param options - CORS configuration (all optional, sensible defaults).
+ *
+ * ```ts
+ * app.use(cors({ origin: "https://example.com", credentials: true }));
+ * ```
+ */
 export function cors(options: CorsOptions = {}): DesoMiddleware {
   const defaults = {
     origin: "*",

@@ -1,3 +1,12 @@
+/**
+ * Zod-based request validation middleware.
+ *
+ * Validates the JSON body, query string, or route parameters against a
+ * Zod schema. Stores the validated (transformed) data on the context
+ * under the target key so downstream handlers can access it via
+ * `context.get("json")`, `context.get("query")`, or `context.get("params")`.
+ * @module
+ */
 import type { z } from "zod";
 import type { DesoContext } from "../context.ts";
 import type { DesoMiddleware, JSONValue } from "../types.ts";
@@ -40,6 +49,28 @@ const validationError = (issues: z.ZodIssue[]) => ({
   issues: toJSON(issues),
 });
 
+/**
+ * Middleware that validates the request against a Zod schema.
+ *
+ * Supported targets:
+ * - `"json"` — validates the parsed JSON body
+ * - `"query"` — validates the query-string parameters
+ * - `"params"` — validates the route parameters
+ *
+ * On validation failure a 400 response with `{ error, issues }` is returned.
+ * On success the validated data is stored on the context under the target
+ * key name.
+ *
+ * @param target - Which part of the request to validate.
+ * @param schema - A Zod schema to validate against.
+ *
+ * ```ts
+ * const UserSchema = z.object({ name: z.string(), age: z.number() });
+ * app.post("/users", zValidator("json", UserSchema), (ctx) => {
+ *   const user = ctx.get("json");
+ * });
+ * ```
+ */
 export const zValidator = <T extends z.ZodType>(
   target: "json" | "query" | "params",
   schema: T,

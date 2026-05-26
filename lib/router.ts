@@ -1,3 +1,13 @@
+/**
+ * Trie-based HTTP router with path-parameter and wildcard support.
+ *
+ * Internally stores routes in a nested `Map` structure. Pattern segments
+ * starting with `:` are treated as named parameters (optionally constrained
+ * by an inline regex). A `*` segment acts as a catch-all wildcard.
+ * Results are cached in an LRU cache (default 1000 entries) for fast
+ * repeated lookups.
+ * @module
+ */
 import type { DesoHandler, RouteParams } from "./types.ts";
 
 type RouteMatchResult<Path extends string> = [
@@ -8,6 +18,19 @@ type RouteMatchResult<Path extends string> = [
 
 type RouteOptions = { params: Map<string, unknown>; path: string };
 
+/**
+ * A trie-based HTTP router with LRU caching.
+ *
+ * Supports static segments, `:param` segments, `:param(regex)` constrained
+ * segments, and `*` wildcard segments. Exact matches take priority over
+ * parameterised segments.
+ *
+ * ```ts
+ * const router = new DesoRouter();
+ * router.add("/users/:id", handler);
+ * const [h, params, pattern] = router.match("/users/42");
+ * ```
+ */
 export class DesoRouter {
   #trie = new Map<string, unknown>();
   #handlerKey = "$_handler";
@@ -15,15 +38,34 @@ export class DesoRouter {
   #matchCache = new Map<string, RouteMatchResult<string>>();
   #maxCacheSize: number;
 
+  /**
+   * @param maxCacheSize - Maximum number of path→result entries in the
+   *   internal LRU cache (default 1000).
+   */
   constructor(maxCacheSize = 1000) {
     this.#maxCacheSize = maxCacheSize;
   }
 
+  /**
+   * Register a handler for a given path pattern.
+   * @param path - Route pattern (e.g. `/users/:id`, `/assets/*`).
+   * @param handler - The handler to invoke when the pattern matches.
+   */
   add(path: string, handler: DesoHandler): void {
     const parts = path.split("/").filter(Boolean);
     this.#insert(parts.length === 0 ? ["$"] : parts, handler, this.#trie);
   }
 
+  /**
+   * Match a request path against registered patterns.
+   *
+   * Returns a tuple of `[handler, params, matchedPattern]`. If no match is
+   * found the handler will be `undefined`.
+   *
+   * Results are cached in an LRU cache for subsequent lookups.
+   *
+   * @param path - The raw request path (e.g. `/users/42`).
+   */
   match(path: string): RouteMatchResult<string> {
     const cached = this.#matchCache.get(path);
     if (cached) return cached;

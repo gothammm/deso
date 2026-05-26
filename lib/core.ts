@@ -1,3 +1,11 @@
+/**
+ * Application core — the main entry point for creating a Deso web server.
+ *
+ * Provides route registration (get/post/put/patch/delete/head/options/any),
+ * middleware composition via `use()`, route grouping, WebSocket support,
+ * and a thin `serve()` wrapper around `Deno.serve`.
+ * @module
+ */
 import { AsyncLocalStorage } from "node:async_hooks";
 import { Registry } from "./core_registry.ts";
 import { DesoRequestHandler } from "./request_handler.ts";
@@ -5,6 +13,15 @@ import type { DesoHandler, DesoMiddleware, HttpMethod } from "./types.ts";
 import type { WsHandlers } from "./ws/mod.ts";
 import { wsHandler } from "./ws/mod.ts";
 
+/**
+ * A Deso application instance.
+ *
+ * ```ts
+ * const app = new Deso();
+ * app.get("/hello", (ctx) => ctx.text("Hello!"));
+ * app.serve({ port: 3000 });
+ * ```
+ */
 export class Deso {
   #registry: Registry;
   #requestHandler: DesoRequestHandler;
@@ -12,6 +29,12 @@ export class Deso {
   #groupStack: Array<{ prefix: string; middlewares: DesoMiddleware[] }> = [];
   #config: { enableAsyncLocalStorage: boolean };
 
+  /**
+   * Create a new Deso application.
+   * @param config.enableAsyncLocalStorage - When `true`, enables
+   *   `AsyncLocalStorage` so that per-request context is available outside
+   *   the middleware chain (default `false`).
+   */
   constructor(config: { enableAsyncLocalStorage?: boolean } = {}) {
     this.#config = {
       enableAsyncLocalStorage: config.enableAsyncLocalStorage ?? false,
@@ -20,6 +43,14 @@ export class Deso {
     this.#requestHandler = new DesoRequestHandler(this.#registry);
   }
 
+  /**
+   * Start the HTTP server.
+   *
+   * Registers SIGINT/SIGTERM handlers for graceful shutdown.
+   *
+   * @param options - Standard `Deno.ServeTcpOptions` (default port 3000).
+   * @returns A promise that resolves when the server shuts down.
+   */
   serve(options: Deno.ServeTcpOptions = { port: 3000 }): Promise<void> {
     if (options.signal) {
       const server = Deno.serve(options, (request) => this.fetch(request));
@@ -57,6 +88,10 @@ export class Deso {
     });
   }
 
+  /**
+   * Handle a single HTTP request through the full middleware + routing chain.
+   * Useful with `Deno.serve` directly or when embedding in another server.
+   */
   fetch = (request: Request): Promise<Response> => {
     if (this.#config.enableAsyncLocalStorage) {
       return this.#contextStorage.run(
@@ -70,16 +105,39 @@ export class Deso {
     return this.#requestHandler.fetch(request);
   };
 
+  /** Access the `AsyncLocalStorage` store for the current request, if enabled. */
   get als(): Map<string, unknown> | undefined {
     return this.#contextStorage.getStore() as Map<string, unknown> | undefined;
   }
 
+  /**
+   * Register one or more global middlewares that run on **every** request,
+   * including unmatched (404) routes.
+   *
+   * @param middlewares - Middleware functions to apply globally.
+   */
   use(...middlewares: DesoMiddleware[]): void {
     for (const middleware of middlewares) {
       this.#registry.addGlobalMiddleware(middleware);
     }
   }
 
+  /**
+   * Create a route group with an optional path prefix and shared middlewares.
+   *
+   * Inside the callback, all registered routes inherit the prefix and
+   * middlewares. Groups can be nested.
+   *
+   * @param path - Optional path prefix (e.g. `/api`).
+   * @param handlers - Shared middlewares followed by a callback that receives
+   *   the current `Deso` instance.
+   *
+   * ```ts
+   * app.group("/api", auth, (api) => {
+   *   api.get("/users", listUsers);
+   * });
+   * ```
+   */
   group<Path extends string>(
     path: Path,
     ...handlers: [...DesoMiddleware[], (core: Deso) => void]
@@ -96,6 +154,11 @@ export class Deso {
     }
   }
 
+  /**
+   * Register a GET route.
+   * @param path - Route pattern (e.g. `/users/:id`).
+   * @param handlers - Optional middlewares followed by the terminal handler.
+   */
   get<Path extends string>(
     path: Path,
     ...handlers: [...DesoMiddleware[], DesoHandler<Path>]
@@ -103,6 +166,11 @@ export class Deso {
     this.#register("GET" as HttpMethod, path, ...handlers);
   }
 
+  /**
+   * Register a POST route.
+   * @param path - Route pattern.
+   * @param handlers - Optional middlewares followed by the terminal handler.
+   */
   post<Path extends string>(
     path: Path,
     ...handlers: [...DesoMiddleware[], DesoHandler<Path>]
@@ -110,6 +178,11 @@ export class Deso {
     this.#register("POST" as HttpMethod, path, ...handlers);
   }
 
+  /**
+   * Register a PUT route.
+   * @param path - Route pattern.
+   * @param handlers - Optional middlewares followed by the terminal handler.
+   */
   put<Path extends string>(
     path: Path,
     ...handlers: [...DesoMiddleware[], DesoHandler<Path>]
@@ -117,6 +190,11 @@ export class Deso {
     this.#register("PUT" as HttpMethod, path, ...handlers);
   }
 
+  /**
+   * Register a PATCH route.
+   * @param path - Route pattern.
+   * @param handlers - Optional middlewares followed by the terminal handler.
+   */
   patch<Path extends string>(
     path: Path,
     ...handlers: [...DesoMiddleware[], DesoHandler<Path>]
@@ -124,6 +202,11 @@ export class Deso {
     this.#register("PATCH" as HttpMethod, path, ...handlers);
   }
 
+  /**
+   * Register a DELETE route.
+   * @param path - Route pattern.
+   * @param handlers - Optional middlewares followed by the terminal handler.
+   */
   delete<Path extends string>(
     path: Path,
     ...handlers: [...DesoMiddleware[], DesoHandler<Path>]
@@ -131,6 +214,11 @@ export class Deso {
     this.#register("DELETE" as HttpMethod, path, ...handlers);
   }
 
+  /**
+   * Register a HEAD route.
+   * @param path - Route pattern.
+   * @param handlers - Optional middlewares followed by the terminal handler.
+   */
   head<Path extends string>(
     path: Path,
     ...handlers: [...DesoMiddleware[], DesoHandler<Path>]
@@ -138,6 +226,11 @@ export class Deso {
     this.#register("HEAD" as HttpMethod, path, ...handlers);
   }
 
+  /**
+   * Register an OPTIONS route.
+   * @param path - Route pattern.
+   * @param handlers - Optional middlewares followed by the terminal handler.
+   */
   options<Path extends string>(
     path: Path,
     ...handlers: [...DesoMiddleware[], DesoHandler<Path>]
@@ -145,6 +238,12 @@ export class Deso {
     this.#register("OPTIONS" as HttpMethod, path, ...handlers);
   }
 
+  /**
+   * Register a route that matches **all** HTTP methods (GET, POST, PUT,
+   * PATCH, DELETE, HEAD, OPTIONS).
+   * @param path - Route pattern.
+   * @param handlers - Optional middlewares followed by the terminal handler.
+   */
   any<Path extends string>(
     path: Path,
     ...handlers: [...DesoMiddleware[], DesoHandler<Path>]
@@ -163,6 +262,21 @@ export class Deso {
     }
   }
 
+  /**
+   * Register a WebSocket endpoint.
+   *
+   * Internally registers a GET route that uses `Deno.upgradeWebSocket`.
+   *
+   * @param path - Route pattern (e.g. `/ws/chat`).
+   * @param handlers - Optional middlewares followed by `WsHandlers`.
+   *
+   * ```ts
+   * app.ws("/ws/chat", {
+   *   open(ws) { ws.send("connected"); },
+   *   message(ws, ev) { ws.send(ev.data); },
+   * });
+   * ```
+   */
   ws<Path extends string>(
     path: Path,
     ...handlers: [...DesoMiddleware[], WsHandlers]

@@ -1,10 +1,25 @@
+/**
+ * Sliding-window rate limiter middleware.
+ *
+ * Tracks request counts per key (defaults to client IP via
+ * `x-forwarded-for` / `x-real-ip`) within a configurable time window.
+ * Returns 429 when a client exceeds the allowed maximum.
+ * Sets standard `RateLimit-*` headers on every response.
+ * @module
+ */
 import type { DesoMiddleware } from "../types.ts";
 
+/** Options for the {@link rateLimiter} middleware. */
 export interface RateLimiterOptions {
+  /** Duration of the rate-limit window in milliseconds. */
   windowMs: number;
+  /** Maximum number of requests allowed within the window. */
   max: number;
+  /** Custom key function for grouping requests (default: client IP). */
   key?: (ctx: { req(): Request }) => string;
+  /** Response body sent when the limit is exceeded (default: "Too many requests…"). */
   message?: string;
+  /** HTTP status code for rate-limited responses (default 429). */
   statusCode?: number;
 }
 
@@ -43,6 +58,18 @@ const addHeaders = (
   });
 };
 
+/**
+ * Sliding-window rate limiter.
+ *
+ * Returns a middleware that counts requests per key within the configured
+ * window and rejects excessive requests with a 429 response.
+ *
+ * @param options - Window duration, max requests, key function, etc.
+ *
+ * ```ts
+ * app.use(rateLimiter({ windowMs: 60_000, max: 100 }));
+ * ```
+ */
 export const rateLimiter = (options: RateLimiterOptions): DesoMiddleware => {
   const windowMs = options.windowMs;
   const max = options.max;

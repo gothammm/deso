@@ -1,3 +1,13 @@
+/**
+ * Deso – a fast, functional Deno web framework.
+ *
+ * Provides a next()-style middleware pipeline, trie-based routing with LRU
+ * caching, Zod/OpenAPI integration, WebSocket support, and production-ready
+ * middleware (CORS, rate limiting, security headers, body limits, timeouts,
+ * health checks, structured logging).
+ *
+ * @module deso
+ */
 export { compose } from "./lib/compositor.ts";
 
 export { DesoContext } from "./lib/context.ts";
